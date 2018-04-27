@@ -1,0 +1,57 @@
+To get rid of the "libpng warning: iCCP: known incorrect sRGB profile" use:
+
+find . -name '*.png' -print -exec mogrify -strip {} \;
+
+mogrify is from ImageMagick which can be installed on ubuntu/wsl using "sudo apt-get install imagemagick"
+
+hdf5 library was a pain to compile. I ended up building it using Cmake on Windows to get the required H5pubconf.h file and running a build under VS2015 to generate the required H5lib_settings.c and H5Tinit.c. My guess is that this will need to be redone (probably using configure and make) for a Mac build.
+
+Fonts in the icons are mostly in the Segoe family but converted to outlines for portability
+
+Checking the LDA output
+
+m_eigenvalues_sorted = 
+ 0.365689
+0.0158325
+ -11.9832
+ -12.1707
+  -12.982
+m_eigenvectors_sorted =  
+  0.51367 0.0621404  0.193798  0.360615  0.017565
+ -0.627198 -0.654417 -0.517815 -0.739109 -0.331875
+  0.398345 -0.071636 -0.172426  0.472294  0.79278
+ -0.302021  0.741085  0.760623 -0.130064 -0.347357
+ -0.304747 -0.116353 -0.293313  0.289303 -0.374691
+m_sd = 
+ 0.604722
+ 0.125827
+-nan(ind)
+-nan(ind)
+-nan(ind)
+m_prop_of_var = 
+ -0.00994954
+-0.000430765
+    0.326034
+    0.331136
+     0.35321
+m_cum_prop = -0.00994954
+ -0.0103803
+   0.315654
+    0.64679
+          1
+          
+Matlab
+M
+-0.0202607515370651	-0.0288087985606052	-0.00282811549716465	-0.0237392274288372	-0.00562659625499791
+0.0527797691688551	0.0564076430497436	0.0351394170370974	0.0289870260541971	0.0592557691044090
+0.0159777010277375	-0.0400040007359655	-0.0802511900967362	-0.0184142543489011	0.00648554524239449
+-0.0737777805315444	0.0193212173337798	0.0351105614152083	0.0139618066913480	-0.0671023819286428
+0.0266967674026525	-0.0301644134801936	0.0362051285768990	0.0140839140625211	0.0105354489875190
+lambda
+60.7844870209310
+2.59627804521984
+-0.111057645975554
+-0.116056614413364
+-0.117559585689291
+
+Once these are normalised then the Matlab and the GalenQt eigenvectors are the same but oddly they are not sorted in the right order. Matlab 1 & 2 equates to GalenQt 2 & 1. And I'm pretty sure that Matlab is right since its image 1 contains the overtext. They are also reversed but that doesn't matter.

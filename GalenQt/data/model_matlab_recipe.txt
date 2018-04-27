@@ -1,0 +1,123 @@
+<TITLE>
+TITLE_BOOKMARK
+</TITLE>
+<COMMAND_LINE>
+matlab  -nodesktop -nojvm -r "try, galenqt_TECHNIQUE_CODE_BOOKMARK(), catch ME, disp(getReport(ME)), quit force, end, quit force"
+</COMMAND_LINE>
+<PROGRAM_NAME>
+galenqt_TECHNIQUE_CODE_BOOKMARK.m
+</PROGRAM_NAME>
+<OUTPUT_IMAGE_REGEXP>
+TECHNIQUE_CODE_BOOKMARK_channel_\d\d\d\.tif
+</OUTPUT_IMAGE_REGEXP>
+<SUBSAMPLES>
+SUBSAMPLES_BOOKMARK
+</SUBSAMPLES>
+<PROGRAM_TEXT>
+function galenqt_TECHNIQUE_CODE_BOOKMARK()
+
+supervised_flag = SUPERVISED_BOOKMARK;
+linear_flag = LINEAR_BOOKMARK;
+out_of_sample_flag = OUT_OF_SAMPLE_BOOKMARK;
+subsamples = SUBSAMPLES_MATLAB;
+output_dimensions = OUTPUT_DIMENSIONS_MATLAB;
+
+input_images = {INPUT_IMAGES_MATLAB};
+output_images = cell(1, length(input_images));
+for i = 1: length(input_images)
+    output_images{i} = sprintf('TECHNIQUE_CODE_BOOKMARK_channel_%03d.tif', i);
+end
+
+addpath(genpath('/Users/wis/Synchronised/Research/Galen Manuscript//Downloads/Matlab Toolbox for Dimensionality Reduction/drtoolbox'));
+addpath(genpath('/Users/wis/Research/Galen Manuscript//Downloads/Matlab Toolbox for Dimensionality Reduction/drtoolbox'));
+
+model_image = input_images{1};
+info = imfinfo(model_image);
+width = info.Width;
+height = info.Height;
+bits = info.BitDepth;
+colortype = info.ColorType;
+fprintf('Model image "%s"\nWidth = %d Height = %d Bits per pixel = %d Type = "%s"\n', model_image, width, height, bits, colortype);
+
+image_data_size = width * height;
+n_images = length(input_images);
+data_matrix = zeros(image_data_size, n_images);
+tic;
+for i_image = 1: n_images
+    file_path = input_images{i_image};
+    fprintf('Reading %s\n', file_path);
+    raw_data = imread(file_path);
+    data_matrix(:, i_image) = raw_data(:);
+end
+elapsed_time = toc;
+fprintf('%d images read in %f seconds\n', n_images, elapsed_time);
+
+if subsamples == 0
+    A = data_matrix;
+    type = 'TECHNIQUE_CODE_BOOKMARK';
+    no_dims = min([n_images, length(output_images), output_dimensions]);
+    [mappedA, mapping] = compute_mapping(A, type, no_dims);
+else
+    sampled_row_indices = randperm(image_data_size, subsamples);
+    X = data_matrix(sampled_row_indices, :);
+    type = 'TECHNIQUE_CODE_BOOKMARK';
+    no_dims = min([n_images, length(output_images), output_dimensions]);
+    [mappedX, mapping] = compute_mapping(X, type, no_dims);
+    
+    if linear_flag || out_of_sample_flag
+        mappedA = out_of_sample(data_matrix, mapping);
+    else
+        mappedA = out_of_sample_est(data_matrix, X, mappedX);
+    end
+end
+
+[rows, cols] = size(mappedA);
+for icol = 1: cols
+    image_data = reshape(mappedA(:, icol), [height, width]);
+    percentile_values = Percentile(image_data, [1, 99]);
+    out_image = uint8(range_map(image_data, percentile_values(1), percentile_values(2), 0, 255, 0, 255));
+    imwrite(out_image, output_images{icol}, 'compression', 'none');
+end
+
+% write blank images if there are too many
+if (cols < length(output_images))
+    out_image = zeros(height, width, 'uint8');
+    for icol = cols + 1: length(output_images)
+        imwrite(out_image, output_images{icol}, 'compression', 'lzw');
+    end
+end
+
+return
+
+% this function maps the dynamic range of an image from one range to another
+function out_image = range_map(in_image, in_low, in_high, out_low, out_high, out_range_low, out_range_high)
+
+in_range = in_high - in_low;
+out_range = out_high - out_low;
+
+out_image = ((double(in_image) - in_low) ./ in_range) .* out_range + out_low;
+
+[out_range_low_r,out_range_low_c] = ind2sub(size(out_image),find(out_image < out_low));
+[out_range_high_r,out_range_high_c] = ind2sub(size(out_image),find(out_image > out_high));
+
+for i = 1: length(out_range_low_r)
+    out_image(out_range_low_r(i), out_range_low_c(i)) = out_range_low;
+end
+for i = 1: length(out_range_high_r)
+    out_image(out_range_high_r(i), out_range_high_c(i)) = out_range_high;
+end
+
+return
+
+% calculate the percentiles of a list of values
+function percentile_values = Percentile(arr, percentiles)
+
+vals = sort(arr(:));
+percentile_values = percentiles;
+for i = 1: length(percentiles)
+    index = round(1 + (percentiles(i)/100) * (length(vals) - 1));
+    percentile_values(i) = vals(index);
+end
+
+return
+</PROGRAM_TEXT>

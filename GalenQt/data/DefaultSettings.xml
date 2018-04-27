@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE GalenQt_0.1Preferences>
+<PREFERENCES>
+ <SETTING key="_versionNumber" type="QString" value="0.0.1"/>
+ <SETTING key="Histogram Bar Colour" type="QColor" value="#ff9a589f"/>
+ <SETTING key="Histogram Line Colour" type="QColor" value="#ff008040"/>
+ <SETTING key="Marker Size" type="float" value="50"/>
+ <SETTING key="Anti-Alias Samples (set to 1 to disable)" type="int" value="8"/>
+ <SETTING key="Gamma Range (log units)" type="int" value="1"/>
+ <SETTING key="Number of Histogram Bins" type="int" value="100"/>
+ <SETTING key="Output Histogram Bar Colour" type="QColor" value="#80373180"/>
+ <SETTING key="Random Label Colours" type="bool" value="true"/>
+ <SETTING key="Reload Last Project File" type="bool" value="false"/>
+ <SETTING key="Selection Colour" type="QColor" value="#c8fdff73"/>
+ <SETTING key="Spin Box Min and Max Step Resolution" type="int" value="100"/>
+ <SETTING key="Spin Box Gamma Step Resolution" type="int" value="100"/>
+ <SETTING key="Zoom Modifier" type="float" value="1.4142135623730951"/>
+ <SETTING key="HDF Information Font" type="QFont" value="Courier New,9,-1,2,50,0,0,0,0,0"/>
+</PREFERENCES>
+
+

@@ -1,0 +1,35 @@
+description	type	supervised	linear	out_of_sample	subsamples	extra_arguments_1	extra_arguments_2	extra_arguments_3
+Isomap	{'Isomap'}			1	1000	k=12		
+Landmark Isomap	{'LandmarkIsomap'}			1	1000	k=12	percentage=0.2	
+Laplacian Eigenmaps	{'Laplacian', 'LaplacianEig', 'LaplacianEigen' 'LaplacianEigenmaps'}			1	1000	k=12	sigma=1.0	eig_impl={['Matlab'], 'JDQR'}
+Hession Local Linear Embedding	{'HLLE', 'HessianLLE'}				1000	k=12	eig_impl={['Matlab'], 'JDQR'}	
+Local Linear Embedding	{'LLE'}			1	1000	k=12	eig_impl={['Matlab'], 'JDQR'}	
+Gaussian Process Latent Variable Model	{'GPLVM'}				1000	 sigma=1.0		
+Local Linear Coordination	{'LLC'}				1000	k=12	no_analyzer=20	max_iterations=200
+Manifold Charting	{'ManifoldChart', 'ManifoldCharting', 'Charting', 'Chart'}			1	1000	no_analyzer=40	max_iterations=200	eig_impl={['Matlab'], 'JDQR'}
+Coordinated Factor Analysis	{'CFA'}				1000	no_analyzer=2	max_iterations=200	
+Local Tangent Space Alignment	{'LTSA'}				1000			
+Linear Local Tangent Space Alignment	{'LLTSA'}		1		1000	k=12	sigma=1.0	eig_impl={['Matlab'], 'JDQR'}
+Landmark Maximum Variance Unfolding	{'LMVU', 'LandmarkMVU'}			1	1000	k=5		
+Fast Maximum Variance Unfolding	{'FastMVU'}			1	1000	k=5	finetune=true	eig_impl={['Matlab'], 'JDQR'}
+Conformal Eigenmaps (aka MVU)	{'Conformal', 'ConformalEig', 'ConformalEigen', 'ConformalEigenmaps', 'CCA', 'MVU'}				1000	k=12	eig_impl={['Matlab'], 'JDQR'}	
+Diffusion Maps	{'DM', 'DiffusionMaps'}				1000	t=1.0	sigma=1.0	
+Stochastic Proximity Embedding	{'SPE'}				1000	type={['Global'], 'Local'}	k=12	
+Locality Preserving Projection	{'LPP'}		1		1000	k=12	sigma=1.0	eig_impl={['Matlab'], 'JDQR'}
+Neighborhood Preserving Embedding	{'NPE'}		1		1000	k=12	eig_impl={['Matlab'], 'JDQR'}	
+Stochastic Neighbor Embedding	{'SNE'}				1000	perplexity=30		
+Symmetric Stochastic Neighbor Embedding	{'SymSNE', 'SymmetricSNE'}				1000	perplexity=30		
+t-Distributed Stochastic Neighbor Embedding	{'tSNE', 't-SNE'}				1000	initial_dims=30	perplexity=30	
+Deep Autoencoders Using Denoising Autoencoder Pretraining	{'AutoEncoder', 'Autoencoder'}			1	1000	lambda=0.0		
+Kernel PCA	{'KPCA', 'KernelPCA'}			1	1000	kernel={'linear', 'poly', ['gauss']}		
+Generalized Discriminant Analysis	{'KLDA', 'KFDA', 'KernelLDA', 'KernelFDA', 'GDA'}	1			1000	kernel={'linear', 'poly', ['gauss']}		
+Linear Discriminant Analysis (aka CVA)	{'LDA', 'FDA'}	1	1		1000			
+Maximally Collapsing Metric Learning	{'MCML'}	1	1		1000			
+Neighborhood Components Analysis	{'NCA'}	1	1		1000	lambda=0.0		
+Classical Multi-Dimensional Scaling	{'MDS'}				1000			
+Sammon Mapping	{'Sammon'}				1000			
+Principal Component Analysis	{'PCA', 'KLM'}		1		1000			
+Simple Principal Component Analysis	{'SPCA', 'SimplePCA'}		1		1000			
+Probabilistic Principal Component Analysis	{'PPCA', 'ProbPCA', 'EMPCA'}		1		1000	max_iterations=200		
+Factor Analysis	{'FactorAnalysis', 'FA'}		1		1000			
+Large-Margin Nearest Neighbor	{'LMNN'}	1	1		1000	k=3		
