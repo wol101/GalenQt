@@ -24,9 +24,7 @@ public:
     ~SingleChannelImage();
 
     void AllocateMemory(int width, int height, bool fill, float fillValue = 0.0f);
-    void UpdateMinMax();
     void UpdateHistogram();
-    void UpdateDisplay();
     void AddToDomDocument(QDomDocument *doc, QDomElement *parent, const QString &parentFolder);
     bool SaveImageToTiffFile(const QString &fileName);
     float optimalGamma();
@@ -63,13 +61,11 @@ public:
     int pixels() const;
     QString url() const;
     QString localPath() const;
-    bool validDisplayMinMax() const;
-    bool validHistogram() const;
-    bool validMinMax() const;
     int width() const;
     QRect selectionRect() const;
     bool deleteLater() const;
     bool displayLogged() const;
+    float permilleile(int n) const;
 
     void setDisplayGamma(float displayGamma);
     void setDisplayRange(float displayMin, float displayMax);
@@ -116,14 +112,12 @@ private:
     float m_dataMin;
     float m_dataMax;
     float m_dataLogMin;
-    bool m_validMinMax;
+    float m_permilleile[1001];
     int *m_histogram;
     float *m_binEnds;
     int m_numBins;
     int m_histogramMin;
     int m_histogramMax;
-    bool m_validHistogram;
-    bool m_validDisplayMinMax;
     QRect m_selectionRect;
 
     bool m_deleteLater;

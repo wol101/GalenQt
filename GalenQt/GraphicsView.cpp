@@ -31,6 +31,8 @@ GraphicsView::GraphicsView(QWidget *parent) :
     m_textureBlue = 0;
     m_textureBlack = 0;
     m_textureMarker = 0;
+    m_blackImage = 0;
+    m_markerImage = 0;;
     m_updateRepeatCount = 0;
     m_textureUpdateRepeats = 1;
     m_drawRed = false;
@@ -67,6 +69,8 @@ GraphicsView::~GraphicsView()
     if (m_textureBlue) delete m_textureBlue;
     if (m_textureBlack) delete m_textureBlack;
     if (m_textureMarker) delete m_textureMarker;
+    if (m_blackImage) delete m_blackImage;
+    if (m_markerImage) delete m_markerImage;
     doneCurrent();
 }
 
@@ -125,32 +129,32 @@ void GraphicsView::initShaders()
 
 void GraphicsView::initTextures()
 {
-    QImage blackImage(8, 8, QImage::Format_Grayscale8);
-    blackImage.fill(0);
+    m_blackImage = new QImage(8, 8, QImage::Format_Grayscale8);
+    m_blackImage->fill(0);
     if (m_textureBlack) delete m_textureBlack;
-    m_textureBlack = new QOpenGLTexture(blackImage, QOpenGLTexture::DontGenerateMipMaps);
+    m_textureBlack = new QOpenGLTexture(*m_blackImage, QOpenGLTexture::DontGenerateMipMaps);
     m_textureBlack->setMinificationFilter(QOpenGLTexture::Linear);
     m_textureBlack->setMagnificationFilter(QOpenGLTexture::Nearest);
     m_textureBlack->setWrapMode(QOpenGLTexture::ClampToEdge);
     if (m_textureRed) delete m_textureRed;
-    m_textureRed = new QOpenGLTexture(blackImage, QOpenGLTexture::DontGenerateMipMaps);
+    m_textureRed = new QOpenGLTexture(*m_blackImage, QOpenGLTexture::DontGenerateMipMaps);
     m_textureRed->setMinificationFilter(QOpenGLTexture::Linear);
     m_textureRed->setMagnificationFilter(QOpenGLTexture::Nearest);
     m_textureRed->setWrapMode(QOpenGLTexture::ClampToEdge);
     if (m_textureGreen) delete m_textureGreen;
-    m_textureGreen = new QOpenGLTexture(blackImage, QOpenGLTexture::DontGenerateMipMaps);
+    m_textureGreen = new QOpenGLTexture(*m_blackImage, QOpenGLTexture::DontGenerateMipMaps);
     m_textureGreen->setMinificationFilter(QOpenGLTexture::Linear);
     m_textureGreen->setMagnificationFilter(QOpenGLTexture::Nearest);
     m_textureGreen->setWrapMode(QOpenGLTexture::ClampToEdge);
     if (m_textureBlue) delete m_textureBlue;
-    m_textureBlue = new QOpenGLTexture(blackImage, QOpenGLTexture::DontGenerateMipMaps);
+    m_textureBlue = new QOpenGLTexture(*m_blackImage, QOpenGLTexture::DontGenerateMipMaps);
     m_textureBlue->setMinificationFilter(QOpenGLTexture::Linear);
     m_textureBlue->setMagnificationFilter(QOpenGLTexture::Nearest);
     m_textureBlue->setWrapMode(QOpenGLTexture::ClampToEdge);
 
-    QImage markerImage(":/images/cursor-cross.png");
+    m_markerImage = new QImage(":/images/cursor-cross.png");
     if (m_textureMarker) delete m_textureMarker;
-    m_textureMarker = new QOpenGLTexture(markerImage, QOpenGLTexture::DontGenerateMipMaps);
+    m_textureMarker = new QOpenGLTexture(*m_markerImage, QOpenGLTexture::DontGenerateMipMaps);
     m_textureMarker->setMinificationFilter(QOpenGLTexture::Linear);
     m_textureMarker->setMagnificationFilter(QOpenGLTexture::Nearest);
     m_textureMarker->setWrapMode(QOpenGLTexture::ClampToEdge);
@@ -314,31 +318,65 @@ void GraphicsView::paintGL()
     // Clear color and depth buffer
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-    qDebug("m_textureDisplayRed.minimum=%g", m_textureDisplayRed.minimum);
-    qDebug("m_textureDisplayRed.maximum=%g", m_textureDisplayRed.maximum);
-    qDebug("m_textureDisplayGreen.minimum=%g", m_textureDisplayGreen.minimum);
-    qDebug("m_textureDisplayGreen.maximum=%g", m_textureDisplayGreen.maximum);
-    qDebug("m_textureDisplayBlue.minimum=%g", m_textureDisplayBlue.minimum);
-    qDebug("m_textureDisplayBlue.maximum=%g", m_textureDisplayBlue.maximum);
+//    qDebug("m_textureDisplayRed.minimum=%g", m_textureDisplayRed.minimum);
+//    qDebug("m_textureDisplayRed.maximum=%g", m_textureDisplayRed.maximum);
+//    qDebug("m_textureDisplayGreen.minimum=%g", m_textureDisplayGreen.minimum);
+//    qDebug("m_textureDisplayGreen.maximum=%g", m_textureDisplayGreen.maximum);
+//    qDebug("m_textureDisplayBlue.minimum=%g", m_textureDisplayBlue.minimum);
+//    qDebug("m_textureDisplayBlue.maximum=%g", m_textureDisplayBlue.maximum);
 
     m_shaderProgram.bind();
 
     m_shaderProgram.setUniformValue("hasTexture", true);
-    m_shaderProgram.setUniformValue("redMin", m_textureDisplayRed.minimum);
-    m_shaderProgram.setUniformValue("redMax", m_textureDisplayRed.maximum);
-    m_shaderProgram.setUniformValue("greenMin", m_textureDisplayGreen.minimum);
-    m_shaderProgram.setUniformValue("greenMax", m_textureDisplayGreen.maximum);
-    m_shaderProgram.setUniformValue("blueMin", m_textureDisplayBlue.minimum);
-    m_shaderProgram.setUniformValue("blueMax", m_textureDisplayBlue.maximum);
-    m_shaderProgram.setUniformValue("redGamma", m_textureDisplayRed.gamma);
-    m_shaderProgram.setUniformValue("redZebra", m_textureDisplayRed.zebra);
-    m_shaderProgram.setUniformValue("greenGamma", m_textureDisplayGreen.gamma);
-    m_shaderProgram.setUniformValue("greenZebra", m_textureDisplayGreen.zebra);
-    m_shaderProgram.setUniformValue("blueGamma", m_textureDisplayBlue.gamma);
-    m_shaderProgram.setUniformValue("blueZebra", m_textureDisplayBlue.zebra);
-    m_shaderProgram.setUniformValue("redLog", m_textureDisplayRed.log);
-    m_shaderProgram.setUniformValue("greenLog", m_textureDisplayGreen.log);
-    m_shaderProgram.setUniformValue("blueLog", m_textureDisplayBlue.log);
+
+    if (m_drawRed)
+    {
+        m_shaderProgram.setUniformValue("redGamma", m_textureDisplayRed.gamma);
+        m_shaderProgram.setUniformValue("redLog", m_textureDisplayRed.log);
+        m_shaderProgram.setUniformValue("redMax", m_textureDisplayRed.maximum);
+        m_shaderProgram.setUniformValue("redMin", m_textureDisplayRed.minimum);
+        m_shaderProgram.setUniformValue("redZebra", m_textureDisplayRed.zebra);
+    }
+    else
+    {
+        m_shaderProgram.setUniformValue("redGamma", 1.0f);
+        m_shaderProgram.setUniformValue("redLog", false);
+        m_shaderProgram.setUniformValue("redMax", 1.0f);
+        m_shaderProgram.setUniformValue("redMin", 0.0f);
+        m_shaderProgram.setUniformValue("redZebra", 1.0f);
+    }
+    if (m_drawGreen)
+    {
+        m_shaderProgram.setUniformValue("greenGamma", m_textureDisplayGreen.gamma);
+        m_shaderProgram.setUniformValue("greenLog", m_textureDisplayGreen.log);
+        m_shaderProgram.setUniformValue("greenMax", m_textureDisplayGreen.maximum);
+        m_shaderProgram.setUniformValue("greenMin", m_textureDisplayGreen.minimum);
+        m_shaderProgram.setUniformValue("greenZebra", m_textureDisplayGreen.zebra);
+    }
+    else
+    {
+        m_shaderProgram.setUniformValue("greenGamma", 1.0f);
+        m_shaderProgram.setUniformValue("greenLog", false);
+        m_shaderProgram.setUniformValue("greenMax", 1.0f);
+        m_shaderProgram.setUniformValue("greenMin", 0.0f);
+        m_shaderProgram.setUniformValue("greenZebra", 1.0f);
+    }
+    if (m_drawBlue)
+    {
+        m_shaderProgram.setUniformValue("blueGamma", m_textureDisplayBlue.gamma);
+        m_shaderProgram.setUniformValue("blueLog", m_textureDisplayBlue.log);
+        m_shaderProgram.setUniformValue("blueMax", m_textureDisplayBlue.maximum);
+        m_shaderProgram.setUniformValue("blueMin", m_textureDisplayBlue.minimum);
+        m_shaderProgram.setUniformValue("blueZebra", m_textureDisplayBlue.zebra);
+    }
+    else
+    {
+        m_shaderProgram.setUniformValue("blueGamma", 1.0f);
+        m_shaderProgram.setUniformValue("blueLog", false);
+        m_shaderProgram.setUniformValue("blueMax", 1.0f);
+        m_shaderProgram.setUniformValue("blueMin", 0.0f);
+        m_shaderProgram.setUniformValue("blueZebra", 1.0f);
+    }
 
     // Set the 3 textures
     glActiveTexture(GL_TEXTURE0);
@@ -627,7 +665,7 @@ void GraphicsView::setImageWidth()
     int blueWidth = 1;
     int blueHeight = 1;
     if (m_textureRed) { redWidth = m_textureRed->width(); redHeight = m_textureRed->height(); }
-    if (m_textureGreen) {greenWidth = m_textureGreen->width(); greenHeight = m_textureGreen->height(); }
+    if (m_textureGreen) { greenWidth = m_textureGreen->width(); greenHeight = m_textureGreen->height(); }
     if (m_textureBlue) { blueWidth = m_textureBlue->width(); blueHeight = m_textureBlue->height(); }
     m_imageWidth = MAX(redWidth, MAX(greenWidth, blueWidth));
     m_imageHeight = MAX(redHeight, MAX(greenHeight, blueHeight));
@@ -659,18 +697,9 @@ void GraphicsView::menuRequest(const QPoint &p)
     QMenu menu(this);
     QAction *deletePointAct = new QAction(QIcon(":/images/edit-delete-2.png"), tr("Delete Nearest Point"), this);
     deletePointAct->setStatusTip(tr("Deletes the nearest point to the cursor in the active list"));
-    QAction *logDisplayAct = new QAction(QIcon(":/images/tree_s.png"), tr("Display Log"), this);
-    logDisplayAct->setStatusTip(tr("Displays the log transformed image"));
-    QAction *normalDisplayAct = new QAction(QIcon(":/images/no_tree_s.png"), tr("Display Normal"), this);
-    normalDisplayAct->setStatusTip(tr("Displays the untransformed image"));
 
-    menu.addAction(logDisplayAct);
-    menu.addAction(normalDisplayAct);
-    menu.addSeparator();
-    if (m_labelledPoints.size()) menu.addAction(deletePointAct);
-
-    if (m_textureDisplayRed.log && m_textureDisplayGreen.log && m_textureDisplayBlue.log) logDisplayAct->setEnabled(false);
-    if (!m_textureDisplayRed.log && !m_textureDisplayGreen.log && !m_textureDisplayBlue.log) normalDisplayAct->setEnabled(false);
+    menu.addAction(deletePointAct);
+    if (m_labelledPoints.size() == 0) deletePointAct->setEnabled(false);
 
     QPoint gp = this->mapToGlobal(p);
     QAction *action = menu.exec(gp);
@@ -681,22 +710,6 @@ void GraphicsView::menuRequest(const QPoint &p)
         QMatrix4x4 invertedVPMatrix = (m_projection * m_view).inverted();
         QVector3D newCoordinate = invertedVPMatrix * QVector3D(x, y, 0);
         emit deleteLabelledPoint(newCoordinate.x(), newCoordinate.y());
-    }
-    if (action == logDisplayAct)
-    {
-        m_textureDisplayRed.log = true;
-        m_textureDisplayGreen.log = true;
-        m_textureDisplayBlue.log = true;
-        emit emitDrawLog(true);
-        update();
-    }
-    if (action == normalDisplayAct)
-    {
-        m_textureDisplayRed.log = false;
-        m_textureDisplayGreen.log = false;
-        m_textureDisplayBlue.log = false;
-        emit emitDrawLog(false);
-        update();
     }
 }
 

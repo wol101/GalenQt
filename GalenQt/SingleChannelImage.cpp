@@ -10,17 +10,21 @@
 #include "SingleChannelImage.h"
 
 #include "CImg.h"
+#include "Utilities.h"
 
 #include <QImage>
 #include <QDomDocument>
 #include <QDomElement>
 #include <QFileInfo>
 #include <QDir>
+#include <qglobal.h>
 
 #include <algorithm>
 #include <cfloat>
 #include <cmath>
-#include <qglobal.h>
+#ifdef _WIN32
+#include <omp.h>
+#endif
 
 #define CLAMP(n,lower,upper) (std::max(lower, std::min(n, upper)))
 #define ALMOST_ZERO 0.00001f
@@ -34,18 +38,15 @@ SingleChannelImage::SingleChannelImage()
     m_data = 0;
     m_dataMin = 0;
     m_dataMax = 1;
-    m_validMinMax = false;
     m_numBins = 0;
     m_histogram = 0;
     m_binEnds = 0;
     m_histogramMin = 0;
     m_histogramMax = 0;
-    m_validHistogram = false;
     m_displayMin = 0;
     m_displayMax = 1;
     m_dataLogMin = 0;
     m_displayGamma = 1;
-    m_validDisplayMinMax = false;
     m_displayZebra = 1;
     m_displayRed = false;
     m_displayGreen = false;
@@ -71,29 +72,93 @@ void SingleChannelImage::AllocateMemory(int width, int height, bool fill, float 
     if (fill) std::fill(m_data, m_data + m_pixels, fillValue);
     m_dataMin = 0;
     m_dataMax = 0;
-    m_validMinMax = false;
-    m_validHistogram = false;
 }
 
-void SingleChannelImage::UpdateMinMax()
-{
-    m_dataMin = FLT_MAX;
-    m_dataLogMin = FLT_MAX;
-    m_dataMax = -FLT_MAX;
-    float *dataPtr = m_data;
-    for (int i = 0; i < m_pixels; i++)
-    {
-        if (*dataPtr > m_dataMax) m_dataMax = *dataPtr;
-        if (*dataPtr < m_dataMin) m_dataMin = *dataPtr;
-        if (*dataPtr < m_dataLogMin && *dataPtr > 0) m_dataLogMin = *dataPtr;
-        dataPtr++;
-    }
-    m_validMinMax = true;
-}
+//void SingleChannelImage::UpdateMinMax()
+//{
+//    m_dataMin = FLT_MAX;
+//    m_dataLogMin = FLT_MAX;
+//    m_dataMax = -FLT_MAX;
+//    float v;
+//#pragma omp parallel for default(none) private(v) // tested, I get a x2.5 speedup on big images
+//    for (int i = 0; i < m_pixels; i++)
+//    {
+//        v = m_data[i];
+//        if (v > m_dataMax)
+//        {
+//#pragma omp critical // atomic does not work for =
+//            m_dataMax = v;
+//        }
+//        if (v < m_dataMin)
+//        {
+//#pragma omp critical
+//            m_dataMin = v;
+//        }
+//        if (v < m_dataLogMin && v > 0)
+//        {
+//#pragma omp critical
+//            m_dataLogMin = v;
+//        }
+//    }
+//    m_validMinMax = true;
+//}
 
 void SingleChannelImage::UpdateHistogram()
 {
-    int i, index;
+    Q_ASSERT(m_numBins > 2);
+
+    // create a sorted copy of the data
+    float *sortInput = new float[m_pixels];
+    std::memcpy(sortInput, m_data, m_pixels * sizeof(float));
+    float *sortOutput = new float[m_pixels];
+    Utilities::RadixSort11(sortInput, sortOutput, m_pixels);
+    delete [] sortInput;
+
+    // now set some of the key values
+    m_dataMin = sortOutput[0];
+    m_dataMax = sortOutput[m_pixels - 1];
+    m_displayMin = m_dataMin;
+    m_displayMax = m_dataMax;
+
+    // get the bin ranges
+    float binWidth = (m_dataMax - m_dataMin) / m_numBins;
+    // this is to get around any rounding error problems with the ends of ranges
+    m_binEnds[0] = nextafterf(m_dataMin, -FLT_MAX);
+    m_binEnds[m_numBins] = nextafterf(m_dataMax, FLT_MAX);
+    for (int i = 1; i < m_numBins; i++) m_binEnds[i] = m_dataMin + (i * binWidth);
+    // now count the entries in the bins
+    std::fill(m_histogram, m_histogram + m_numBins, 0);
+    int nextBin = 1;
+    int lastBinCount = 0;
+    m_dataLogMin = 0;
+    for (int i = 0; i < m_pixels; i++)
+    {
+        if (m_dataLogMin == 0 && sortOutput[i] > 0) m_dataLogMin = sortOutput[i];
+        if (sortOutput[i] >= m_binEnds[nextBin])
+        {
+            m_histogram[nextBin - 1] = i - lastBinCount;
+            lastBinCount = i;
+            nextBin++;
+        }
+    }
+    m_histogram[nextBin - 1] = m_pixels - 1 - lastBinCount;
+    m_histogramMin = INT_MAX;
+    m_histogramMax = -INT_MAX;
+    for (int i = 0; i < m_numBins; i++)
+    {
+        if (m_histogram[i] < m_histogramMin) m_histogramMin = m_histogram[i];
+        if (m_histogram[i] > m_histogramMax) m_histogramMax = m_histogram[i];
+    }
+
+    // calculate the permille-iles
+    for (int i = 0; i < 1001; i++)
+    {
+        int index = int(0.5 + (m_pixels - 1) * float(i) / 1000.0f);
+        m_permilleile[i] = sortOutput[index];
+    }
+
+
+/*
     if (m_validMinMax == false) UpdateMinMax();
     if ((m_dataMax - m_dataMin) <= 0 || m_numBins < 2)
     {
@@ -105,31 +170,39 @@ void SingleChannelImage::UpdateHistogram()
     // this is to get around any rounding error problems with the ends of ranges
     m_binEnds[0] = nextafterf(m_dataMin, -FLT_MAX);
     m_binEnds[m_numBins] = nextafterf(m_dataMax, FLT_MAX);
-    for (i = 1; i < m_numBins; i++) m_binEnds[i] = m_dataMin + (i * binWidth);
+    for (int i = 1; i < m_numBins; i++) m_binEnds[i] = m_dataMin + (i * binWidth);
     // now get the frequencies in the bins
     std::fill(m_histogram, m_histogram + m_numBins, 0);
     float *dataPtr = m_data;
-    for (i = 0; i < m_pixels; i++)
+    // qDebug("UpdateHistogram: omp_get_max_threads = %d", omp_get_max_threads());
+    int index;
+#pragma omp parallel default(none) private(index)
     {
-        index = BinarySearchRange(m_binEnds, m_numBins + 1, *dataPtr);
-        m_histogram[index]++;
-        dataPtr++;
+        // qDebug("UpdateHistogram: omp_get_num_threads = %d", omp_get_num_threads());
+#pragma omp for
+        for (int i = 0; i < m_pixels; i++)
+        {
+            index = BinarySearchRange(m_binEnds, m_numBins + 1, dataPtr[i]);
+#pragma omp atomic
+            m_histogram[index]++;
+        }
     }
     m_histogramMin = INT_MAX;
     m_histogramMax = -INT_MAX;
-    for (i = 0; i < m_numBins; i++)
+    for (int i = 0; i < m_numBins; i++)
     {
         if (m_histogram[i] < m_histogramMin) m_histogramMin = m_histogram[i];
         if (m_histogram[i] > m_histogramMax) m_histogramMax = m_histogram[i];
     }
     m_validHistogram = true;
+*/
 }
 
-void SingleChannelImage::UpdateDisplay()
-{
-    if (m_validMinMax == false) UpdateMinMax();
-    if (m_validDisplayMinMax == false) setDisplayRange(m_dataMin, m_dataMax);
-}
+//void SingleChannelImage::UpdateDisplay()
+//{
+//    if (m_validMinMax == false) UpdateMinMax();
+//    if (m_validDisplayMinMax == false) setDisplayRange(m_dataMin, m_dataMax);
+//}
 
 void SingleChannelImage::setNumBins(int numBins)
 {
@@ -139,7 +212,6 @@ void SingleChannelImage::setNumBins(int numBins)
     m_numBins = numBins;
     m_histogram = new int[m_numBins];
     m_binEnds = new float[m_numBins + 1];
-    m_validHistogram = false;
 }
 
 bool SingleChannelImage::SaveImageToTiffFile(const QString &fileName)
@@ -168,6 +240,7 @@ float *SingleChannelImage::getDisplayMappedDataCopy()
     float *newData = new float[m_pixels];
     if (m_displayLogged == false)
     {
+        #pragma omp parallel for default(none) shared(newData)
         for (int i = 0; i < m_pixels; i++)
         {
             newData[i] = std::pow(std::fmod(CLAMP((m_data[i] - m_displayMin) / (m_displayMax - m_displayMin), 0.0f, 0.99999f) * m_displayZebra, 1.0f), m_displayGamma);
@@ -177,6 +250,7 @@ float *SingleChannelImage::getDisplayMappedDataCopy()
     {
         float logDisplayMin = std::log(m_displayMin);
         float logDisplayMax = std::log(m_displayMax);
+        #pragma omp parallel for default(none) shared(newData)
         for (int i = 0; i < m_pixels; i++)
         {
             newData[i] = std::pow(std::fmod(CLAMP((std::log(std::max(m_data[i], m_displayMin)) - logDisplayMin) / (logDisplayMax - logDisplayMin), 0.0f, 0.99999f) * m_displayZebra, 1.0f), m_displayGamma);
@@ -186,64 +260,75 @@ float *SingleChannelImage::getDisplayMappedDataCopy()
 }
 
 // try to create a single channel image from the filename
-// copes with:
-//RAW : consists in a very simple header (in ascii), then the image data.
-//ASC (Ascii)
-//HDR (Analyze 7.5)
-//INR (Inrimage)
-//PPM/PGM (Portable Pixmap)
-//BMP (uncompressed)
-//PAN (Pandore-5)
-//DLM (Matlab ASCII)
-// and also TIFF via libtiff
+// currently tiff only
 
 bool SingleChannelImage::CreateSingleChannelImagesFromFile(const QString &fileName, SingleChannelImage **imageRead, int numHistogramBins)
 {
-    int ix, iy, ic;
     float *imageDataPtr;
-    float v;
     *imageRead = 0;
 
     QFileInfo fileInfo(fileName);
     cimg_library::cimg::exception_mode(0); // enable quiet exception mode
-    cimg_library::CImg<float> imageFromFile;
+    cimg_library::CImgList<float> imagesFromFile;
     try
     {
-        imageFromFile.load(fileName.toUtf8().constData()); // note CImg copes with UTF8 to wchar_t using MultiByteToWideChar
+        imagesFromFile.load_tiff(fileName.toUtf8().constData(), 0, 1, 1, 0, 0); // this just loads the first image of a multi-image file
     }
+//    cimg_library::CImg<float> imageFromFile;
+//    try
+//    {
+//        imageFromFile.load(fileName.toUtf8().constData()); // note CImg copes with UTF8 to wchar_t using MultiByteToWideChar
+//    }
     catch (cimg_library::CImgException& e)
     {
         qDebug("SingleChannelImage::CreateSingleChannelImagesFromFile CImg Library Error: %s\n", e.what());
         return false; //error
     }
-     qDebug("Read %s width=%d height=%d depth=%d spectrum=%d\n", fileName.toUtf8().constData(), imageFromFile.width(), imageFromFile.height(), imageFromFile.depth(), imageFromFile.spectrum());
+    cimg_library::CImg<float> &imageFromFile = imagesFromFile.at(0);
+    qDebug("Read %s width=%d height=%d depth=%d spectrum=%d\n", fileName.toUtf8().constData(), imageFromFile.width(), imageFromFile.height(), imageFromFile.depth(), imageFromFile.spectrum());
     // what sort of image is it?
     if (imageFromFile.spectrum() == 1)
     {
         // already a single channel grey scale image
         SingleChannelImage *image = new SingleChannelImage();
         image->AllocateMemory(imageFromFile.width(), imageFromFile.height(), false);
+        std::copy(imageFromFile.data(), imageFromFile.data() + imageFromFile.width() * imageFromFile.height(), image->data());
+/*
         imageDataPtr = image->data();
         image->m_dataMin = FLT_MAX;
         image->m_dataLogMin = FLT_MAX;
         image->m_dataMax = -FLT_MAX;
         float *imageFromFilePtr = imageFromFile.data();
         int size = imageFromFile.width() * imageFromFile.height();
+        float v;
+//        double startTime = omp_get_wtime();
+#pragma omp parallel for default(none) private(v) // tested, I get a x2.5 speedup on big images
         for (int i = 0; i < size; i++)
         {
-            v = *imageFromFilePtr;
-            imageFromFilePtr++;
-            *imageDataPtr = v;
-            imageDataPtr++;
-            if (v > image->m_dataMax) image->m_dataMax = v;
-            if (v < image->m_dataMin) image->m_dataMin = v;
-            if (v < image->m_dataLogMin && v > 0) image->m_dataLogMin = v;
+            v = imageFromFilePtr[i];
+            imageDataPtr[i] = v;
+            if (v > image->m_dataMax)
+            {
+#pragma omp critical // atomic does not work for =
+                image->m_dataMax = v;
+            }
+            if (v < image->m_dataMin)
+            {
+#pragma omp critical
+                image->m_dataMin = v;
+            }
+            if (v < image->m_dataLogMin && v > 0)
+            {
+#pragma omp critical
+                image->m_dataLogMin = v;
+            }
         }
-        image->m_validMinMax = true;
+//        double delTime = omp_get_wtime() - startTime;
+//        qDebug("SingleChannelImage (1) delTime = %f", delTime);
+*/
         image->setNumBins(numHistogramBins);
         image->setLocalPath(QDir::cleanPath(fileInfo.absoluteFilePath()));
         image->UpdateHistogram();
-        image->UpdateDisplay();
         *imageRead = image;
     }
     else
@@ -255,24 +340,41 @@ bool SingleChannelImage::CreateSingleChannelImagesFromFile(const QString &fileNa
         image->m_dataMin = FLT_MAX;
         image->m_dataLogMin = FLT_MAX;
         image->m_dataMax = -FLT_MAX;
-        for (iy = 0; iy < imageFromFile.height(); iy++)
+        float v;
+//        double startTime = omp_get_wtime();
+#pragma omp parallel for default(none) private(v)
+        for (int iy = 0; iy < imageFromFile.height(); iy++)
         {
-            for (ix = 0; ix < imageFromFile.width(); ix++)
+            int iyXWidth = iy * imageFromFile.width();
+            for (int ix = 0; ix < imageFromFile.width(); ix++)
             {
                 v = 0;
-                for (ic = 0; ic < imageFromFile.spectrum(); ic++) v += imageFromFile.atXYZC(ix, iy, 0, ic);
-                *imageDataPtr = v;
-                imageDataPtr++;
-                if (v > image->m_dataMax) image->m_dataMax = v;
-                if (v < image->m_dataMin) image->m_dataMin = v;
-                if (v < image->m_dataLogMin && v > 0) image->m_dataLogMin = v;
+                for (int ic = 0; ic < imageFromFile.spectrum(); ic++) v += imageFromFile.atXYZC(ix, iy, 0, ic);
+                imageDataPtr[iyXWidth + ix] = v;
+/*
+                if (v > image->m_dataMax)
+                {
+#pragma omp critical
+                    image->m_dataMax = v;
+                }
+                if (v < image->m_dataMin)
+                {
+#pragma omp critical
+                    image->m_dataMin = v;
+                }
+                if (v < image->m_dataLogMin && v > 0)
+                {
+#pragma omp critical
+                    image->m_dataLogMin = v;
+                }
+*/
             }
         }
-        image->m_validMinMax = true;
+//        double delTime = omp_get_wtime() - startTime;
+//        qDebug("SingleChannelImage (2) delTime = %f", delTime);
         image->setNumBins(numHistogramBins);
         image->setLocalPath(QDir::cleanPath(fileInfo.absoluteFilePath()));
         image->UpdateHistogram();
-        image->UpdateDisplay();
         *imageRead = image;
     }
     return true; // success
@@ -425,13 +527,19 @@ bool SingleChannelImage::CreateFromDomElement(const QDomElement &element, Single
 float SingleChannelImage::optimalGamma()
 {
     // that routine calculates the gamma value that sets the median of the transformed data to be at the middle of the range
-    float *tempData = new float[m_pixels];
-    std::memcpy(tempData, m_data, m_pixels * sizeof(float));
-    float medianPixel = quickSelect(m_pixels / 2, tempData, m_pixels); // quickselect is moderately quick but destructive so we have to copy the data first
-    delete [] tempData;
-    if (medianPixel == 0) medianPixel = 1; // otherwise we end up with a gamma of zero which is not helpful
-    float normMedianPixel = (float(medianPixel) - m_dataMin) / (m_dataMax - m_dataMin);
-    float optimalGamma = std::log(0.5f) / std::log(normMedianPixel);
+//    float *tempData = new float[m_pixels];
+//    std::memcpy(tempData, m_data, m_pixels * sizeof(float));
+//    // unfortunately quickSelect has poor worst case performance and this can happen with images
+//    // float medianPixel = quickSelect(m_pixels / 2, tempData, m_pixels); // quickselect is moderately quick but destructive so we have to copy the data first
+//    float *temp2Data = new float[m_pixels];
+//    Utilities::RadixSort11(tempData, temp2Data, m_pixels);
+//    float medianPixel = temp2Data[m_pixels / 2];
+//    delete [] temp2Data;
+//    delete [] tempData;
+    float medianPixel = m_permilleile[500];
+    float normMedianPixel = (medianPixel - m_dataMin) / (m_dataMax - m_dataMin);
+    float optimalGamma = 1.0f;
+    if (normMedianPixel > 0) optimalGamma = std::log(0.5f) / std::log(normMedianPixel);
     return optimalGamma;
 }
 
@@ -467,7 +575,6 @@ void SingleChannelImage::setDisplayRange(float displayMin, float displayMax)
 {
     m_displayMin = displayMin;
     m_displayMax = displayMax;
-    m_validDisplayMinMax = true;
 }
 
 
@@ -663,11 +770,6 @@ float SingleChannelImage::dataMax() const
     return m_dataMax;
 }
 
-bool SingleChannelImage::validMinMax() const
-{
-    return m_validMinMax;
-}
-
 int *SingleChannelImage::histogram() const
 {
     return m_histogram;
@@ -693,13 +795,11 @@ int SingleChannelImage::histogramMax() const
     return m_histogramMax;
 }
 
-bool SingleChannelImage::validHistogram() const
+float SingleChannelImage::permilleile(int n) const
 {
-    return m_validHistogram;
+    int i = CLAMP(n,0,1001);
+    return m_permilleile[i];
 }
 
-bool SingleChannelImage::validDisplayMinMax() const
-{
-    return m_validDisplayMinMax;
-}
+
 

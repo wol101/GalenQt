@@ -125,8 +125,8 @@ public slots:
     void deleteCurrentLabelledPoint(float x, float y);
     void zoomToValue(float zoomToValue);
     void updateStatus(QString status);
-    void ticker();
-    void drawLog(bool drawLogged);
+//    void ticker();
+//    void drawLog(bool drawLogged);
 
     void pca();
     void lda();
@@ -134,7 +134,8 @@ public slots:
 
 signals:
     void copyAvailable(bool);
-    void emitStatus(QString status);
+    void statusText(QString status);
+    void menuUpdate();
 
 protected:
     void closeEvent(QCloseEvent *event);
@@ -149,7 +150,7 @@ private:
     bool maybeSave();
     void setCurrentFile(const QString &fileName);
 
-    QTreeWidgetItem *doNewTreeWidgetImageSet(QTreeWidgetItem *parent);
+    QTreeWidgetItem *doNewTreeWidgetImageSet(QTreeWidgetItem *parent, const QString &name);
     void doDeleteTreeWidgetImageSet();
     void doRenameTreeWidgetImageSet();
     void doSetLogDisplayTreeWidgetImageSet(bool useLog);
@@ -159,7 +160,7 @@ private:
     void doDeleteTreeWidgetLabelledPointSet();
     void doRenameTreeWidgetLabelledPointSet();
     void activateImage(ImageTreeWidgetItem *item);
-
+    void applyPermilleile(int lower, int upper);
 
     QString m_currentFile;
     bool m_isUntitled;

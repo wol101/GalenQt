@@ -9,6 +9,8 @@
 #include <cmath>
 #include <cfloat>
 
+#define DEBUG_SCROLLER 0
+
 CustomScroller::CustomScroller(QWidget *parent) : QWidget(parent)
 {
     m_graphicsView = 0;
@@ -57,7 +59,9 @@ void CustomScroller::scrollContents(int value)
         m_graphicsView->setCentreX(newX);
         m_graphicsView->setCentreY(newY);
         m_graphicsView->update();
-        //    qDebug("scrollContents newX = %g newY = %g", newX, newY);
+#if DEBUG_SCROLLER
+        qDebug("scrollContents horizontal=%g vertical=%g newX=%g newY=%g", horizontal, vertical, newX, newY);
+#endif
     }
 }
 
@@ -80,7 +84,9 @@ void CustomScroller::resizeEvent(QResizeEvent *event)
 {
     Q_UNUSED(event);
     // this where I have to adjust the various elements of the scroll bar
-//    qDebug("resizeEvent QResizeEvent oldSize() = %d,%d size() = %d,%d", event->oldSize().width(), event->oldSize().height(), event->size().width(), event->size().height());
+#if DEBUG_SCROLLER
+    qDebug("resizeEvent QResizeEvent oldSize() = %d,%d size() = %d,%d", event->oldSize().width(), event->oldSize().height(), event->size().width(), event->size().height());
+#endif
     if (m_graphicsView)
     {
         // set the ranges to the biggest necessary value
@@ -114,7 +120,9 @@ void CustomScroller::resizeEvent(QResizeEvent *event)
         m_verticalScrollBar->setRange(0, vRange);
         m_verticalScrollBar->setPageStep(int(viewPortHeight));
         m_verticalScrollBar->setValue(vScrollFraction * vRange);
-//        qDebug("resizeEvent hRange = %g vRange = %g viewPortWidth = %g viewPortHeight = %g", hRange, vRange, viewPortWidth, viewPortHeight);
+#if DEBUG_SCROLLER
+        qDebug("resizeEvent hRange = %g vRange = %g viewPortWidth = %g viewPortHeight = %g", hRange, vRange, viewPortWidth, viewPortHeight);
+#endif
         scrollContents(0);
     }
 }
@@ -165,13 +173,9 @@ void CustomScroller::contentsResized()
         m_verticalScrollBar->setRange(0, vRange);
         m_verticalScrollBar->setPageStep(int(viewPortHeight));
         m_verticalScrollBar->setValue(vScrollFraction * vRange);
-//        float hRange = m_topRightBound.x() - m_bottomLeftBound.x();
-//        float vRange = m_topRightBound.y() - m_bottomLeftBound.y();
-//        m_horizontalScrollBar->setRange(0, hRange);
-//        m_horizontalScrollBar->setPageStep(int(viewPortWidth));
-//        m_verticalScrollBar->setRange(0, vRange);
-//        m_verticalScrollBar->setPageStep(int(viewPortHeight));
-//        qDebug("resizeEvent hRange = %g vRange = %g viewPortWidth = %g viewPortHeight = %g", hRange, vRange, viewPortWidth, viewPortHeight);
+#if DEBUG_SCROLLER
+        qDebug("contentsResized hRange = %g vRange = %g viewPortWidth = %g viewPortHeight = %g", hRange, vRange, viewPortWidth, viewPortHeight);
+#endif
         scrollContents(0);
     }
 }
@@ -180,7 +184,9 @@ void CustomScroller::setScrollFractions(float horizontal, float vertical)
 {
     int newX = m_horizontalScrollBar->maximum() * horizontal;
     int newY = m_verticalScrollBar->maximum() * vertical;
-//    qDebug("setScrollFractions newX = %d newY = %d", newX, newY);
+#if DEBUG_SCROLLER
+    qDebug("setScrollFractions newX = %d newY = %d", newX, newY);
+#endif
     m_horizontalScrollBar->setValue(newX);
     m_verticalScrollBar->setValue(newY);
 }

@@ -4,7 +4,7 @@
 #
 #-------------------------------------------------
 
-QT       += core gui xml printsupport svg
+QT       += core gui xml printsupport svg charts
 greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 
 TARGET = GalenQt
@@ -31,18 +31,23 @@ else:win32 {
     DEFINES += EXTRA_COLOUR_DIALOG_OPTIONS=0
     DEFINES += TIF_PLATFORM_CONSOLE
     DEFINES += cimg_display=0
-    DEFINES += cimg_verbosity=1
     DEFINES += cimg_use_tiff
-#    DEFINES += cimg_use_openmp
     DEFINES += _USE_MATH_DEFINES
     SOURCES += libtiff/tif_win32.c
     SOURCES += hdf5/src/H5lib_settings.c hdf5/src/H5Tinit.c
     HEADERS += hdf5/src/H5pubconf.h hdf5/src/H5config.h
-#    QMAKE_CXXFLAGS += -bigobj -Wall
-#    QMAKE_CXXFLAGS += -openmp
-    QMAKE_CXXFLAGS_DEBUG += -Od -RTCsu
-    QMAKE_CXXFLAGS_RELEASE += -Ox -fp:fast -GL
+    QMAKE_CXXFLAGS_DEBUG += -W4 -Od -RTCsu
+    QMAKE_CXXFLAGS_RELEASE += -Ox -fp:fast -GL -openmp
     QMAKE_LFLAGS_RELEASE += -LTCG
+    CONFIG(release, debug|release) {
+        #This is a release build
+        DEFINES += cimg_use_openmp
+        DEFINES += cimg_verbosity=0
+        DEFINES += QT_NO_DEBUG_OUTPUT
+    } else {
+    #This is a debug build
+        DEFINES += cimg_verbosity=2
+    }
 }
 else:unix {
     DEFINES += EXTRA_FILE_DIALOG_OPTIONS=QFileDialog::DontUseNativeDialog
@@ -419,7 +424,8 @@ SOURCES += main.cpp\
     hdf5/hl/src/H5PT.c \
     hdf5/hl/src/H5TB.c \
     HDF5ReaderDialog.cpp \
-    Utilities.cpp
+    Utilities.cpp \
+    ScatterPlotDialog.cpp
 
 HEADERS  += MainWindow.h \
     GraphicsView.h \
@@ -620,14 +626,16 @@ HEADERS  += MainWindow.h \
     hdf5/hl/src/H5TBpublic.h \
     hdf5/hl/src/hdf5_hl.h \
     HDF5ReaderDialog.h \
-    Utilities.h
+    Utilities.h \
+    ScatterPlotDialog.h
 
 FORMS    += \
     AboutDialog.ui \
     MdiChild.ui \
     PCADialog.ui \
     LDADialog.ui \
-    HDF5ReaderDialog.ui
+    HDF5ReaderDialog.ui \
+    ScatterPlotDialog.ui
 
 RESOURCES += \
     mdi.qrc

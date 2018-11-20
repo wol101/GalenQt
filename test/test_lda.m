@@ -1,4 +1,4 @@
-function test_pca(galen_file, output_folder)
+function test_lda(galen_file, output_folder)
 
 % this files produces lda output from the GalenQt XML file
 % however it does not read nested subfolders
@@ -71,7 +71,7 @@ for i = 1: length(labelled_points)
         image_values = zeros(1, length(image_filenames));
         for k = 1: cols
             current_image = image_data{k};
-            image_values(k) = current_image(1 + inf.Height - point(2), 1 + point(1), 1);
+            image_values(k) = current_image(1 + inf.Height - floor(point(2) + 0.5), 1 + floor(point(1) + 0.5), 1);
         end
         selected_data{end + 1} = image_values;
     end
@@ -236,7 +236,7 @@ function imwrite2tif(varargin)
 %   and Metadata to TIFF Files' in Matlab Help.
 
 %   Zhang Jiang 
-%   $Revision: 1.2 $  $Date: 2018/03/20 19:24:47 $
+%   $Revision: 1.4 $  $Date: 2018/06/17 19:45:26 $
 
 if nargin<4 || mod(nargin,2)==1
     error('Invalid number of input arguments.');

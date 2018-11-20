@@ -85,10 +85,10 @@ bool MultiSpectralDocument::Write(const QString &fileName)
 void MultiSpectralDocument::WriteImageChild(QDomDocument *doc, QDomElement *parent, QTreeWidgetItem *child)
 {
     if (child == 0) return;
-    if (child->childCount() == 0) // this is an image
+    ImageTreeWidgetItem *item = dynamic_cast<ImageTreeWidgetItem *>(child);
+    if (child->childCount() == 0 && item && item->image()) // this is an image
     {
-        ImageTreeWidgetItem *item = dynamic_cast<ImageTreeWidgetItem *>(child);
-        if (item) item->image()->AddToDomDocument(doc, parent, m_parentFolder);
+        item->image()->AddToDomDocument(doc, parent, m_parentFolder);
     }
     else // this is a folder
     {
@@ -105,10 +105,10 @@ void MultiSpectralDocument::WriteImageChild(QDomDocument *doc, QDomElement *pare
 void MultiSpectralDocument::WritePointsChild(QDomDocument *doc, QDomElement *parent, QTreeWidgetItem *child)
 {
     if (child == 0) return;
-    if (child->childCount() == 0) // this is an image
+    LabelledPointsTreeWidgetItem *item = dynamic_cast<LabelledPointsTreeWidgetItem *>(child);
+    if (child->childCount() == 0 && item && item->labelledPoints()) // this is a poinmt list
     {
-        LabelledPointsTreeWidgetItem *item = dynamic_cast<LabelledPointsTreeWidgetItem *>(child);
-        if (item) item->labelledPoints()->AddToDomDocument(doc, parent);
+        item->labelledPoints()->AddToDomDocument(doc, parent);
     }
     else // this is a folder
     {

@@ -63,6 +63,7 @@ public:
 
 public slots:
     void updateStatus(QString status);
+    void updateMenus();
 
 protected:
     void closeEvent(QCloseEvent *event);
@@ -78,7 +79,6 @@ private slots:
     void paste();
 #endif
     void about();
-    void updateMenus();
     void updateWindowMenu();
     MdiChild *createMdiChild();
     void switchLayoutDirection();
@@ -98,7 +98,7 @@ private slots:
     void pca();
     void lda();
 
-    void ticker();
+//    void ticker();
     void openLastFile();
 
 
@@ -160,7 +160,7 @@ private:
     QAction *performRecipesAct;
     QAction *importHDF5Act;
 
-    QTimer *m_ticker;
+//    QTimer *m_ticker;
 };
 
 #endif

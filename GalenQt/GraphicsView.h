@@ -93,7 +93,6 @@ signals:
     void deleteLabelledPoint(float x, float y);
     void statusString(QString s);
     void emitZoom(float zoom);
-    void emitDrawLog(bool drawLog);
     void newCentre(float x, float y);
     void imageDimensionsChanged();
 
@@ -139,6 +138,8 @@ private:
     QOpenGLTexture *m_textureBlue;
     QOpenGLTexture *m_textureBlack;
     QOpenGLTexture *m_textureMarker;
+    QImage *m_blackImage;
+    QImage *m_markerImage;
 
     unsigned char m_updateRepeatCount;
     unsigned char m_textureUpdateRepeats;

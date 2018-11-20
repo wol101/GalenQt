@@ -26,6 +26,7 @@ public:
     void setInputImages(const QList<SingleChannelImage *> &inputImages);
 
     QList<SingleChannelImage *> ouputImages() const;
+    QString outputFolder() const;
 
 protected:
     void closeEvent(QCloseEvent *event);

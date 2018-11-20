@@ -28,6 +28,7 @@ public:
     void setInputPoints(const QList<LabelledPoints *> &inputPoints);
 
     QList<SingleChannelImage *> ouputImages() const;
+    QString outputFolder() const;
 
 protected:
     void closeEvent(QCloseEvent *event);
@@ -42,6 +43,7 @@ private slots:
 private:
     void StoreSettings();
     void LoadSettings();
+    void scatterPlot();
 
     Ui::LDADialog *ui;
     QList<SingleChannelImage *> m_inputImages;

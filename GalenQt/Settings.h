@@ -14,8 +14,6 @@ public:
 
     Settings();
 
-    static void Initialise();
-
     static void setValue(const QString &key, const QVariant &value);
     static QVariant value(const QString &key, const QVariant &defaultValue);
 

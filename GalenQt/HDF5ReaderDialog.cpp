@@ -212,10 +212,8 @@ void HDF5ReaderDialog::writeTiffFiles()
         SingleChannelImage *image = new SingleChannelImage();
         image->AllocateMemory(m_nx, m_ny, false);
         std::copy(m_data + i * size, m_data + (i + 1) * size, image->data());
-        image->UpdateMinMax();
         image->setNumBins(Settings::value("Number of Histogram Bins", int(32)).toInt());
         image->UpdateHistogram();
-        image->UpdateDisplay();
         QString name = QString("HDF%1").arg(i, 4, 10, QChar('0'));
         image->setName(name);
         QString filename = QString("HDF_Output_Image_%1.tif").arg(i, 4, 10, QChar('0'));

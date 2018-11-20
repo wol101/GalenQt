@@ -167,7 +167,7 @@ MdiChild::MdiChild(QWidget *parent) :
     connect(ui->treeWidgetImageSet, SIGNAL(itemDoubleClicked(QTreeWidgetItem *, int)), this, SLOT(treeWidgetDoubleClicked(QTreeWidgetItem *, int)));
     connect(ui->treeWidgetImageSet, SIGNAL(itemChanged(QTreeWidgetItem *, int)), this, SLOT(treeWidgetItemChanged(QTreeWidgetItem *, int)), Qt::QueuedConnection);
     connect(ui->treeWidgetLabelledPointSet, SIGNAL(itemDoubleClicked(QTreeWidgetItem *, int)), this, SLOT(treeWidgetDoubleClickedLabelledPointSet(QTreeWidgetItem *, int)));
-    connect(ui->treeWidgetLabelledPointSet, SIGNAL(itemChanged(QTreeWidgetItem *, int)), this, SLOT(treeWidgetitemChangedLabelledPointSet(QTreeWidgetItem *, int)), Qt::QueuedConnection);
+    connect(ui->treeWidgetLabelledPointSet, SIGNAL(itemChanged(QTreeWidgetItem *, int)), this, SLOT(treeWidgetItemChangedLabelledPointSet(QTreeWidgetItem *, int)), Qt::QueuedConnection);
     connect(ui->treeWidgetImageSet->header(), SIGNAL(sectionDoubleClicked(int)), this, SLOT(treeWidgetHeaderDoubleClicked(int)));
     connect(ui->treeWidgetLabelledPointSet->header(), SIGNAL(sectionDoubleClicked(int)), this, SLOT(treeWidgetHeaderDoubleClickedLabelledPointSet(int)));
 
@@ -191,7 +191,6 @@ MdiChild::MdiChild(QWidget *parent) :
     connect(m_graphicsView, SIGNAL(deleteLabelledPoint(float,float)), this, SLOT(deleteCurrentLabelledPoint(float,float)));
     connect(m_graphicsView, SIGNAL(emitZoom(float)), this, SLOT(zoomToValue(float)));
     connect(m_graphicsView, SIGNAL(statusString(QString)), this, SLOT(updateStatus(QString)));
-    connect(m_graphicsView, SIGNAL(emitDrawLog(bool)), this, SLOT(drawLog(bool)));
     connect(m_graphicsView, SIGNAL(imageDimensionsChanged()), m_customScroller, SLOT(contentsResized()));
     connect(m_graphicsView, SIGNAL(newCentre(float,float)), m_customScroller, SLOT(scrollToCentre(float,float)));
 
@@ -593,6 +592,19 @@ void MdiChild::resetDisplay()
     displayValueChanged(0); // called specifically because the signal is blocked
 }
 
+void MdiChild::applyPermilleile(int lower, int upper)
+{
+    QList<QTreeWidgetItem *> selectedItems = ui->treeWidgetImageSet->selectedItems();
+    if (selectedItems.size() == 0) return;
+    ImageTreeWidgetItem *item = dynamic_cast<ImageTreeWidgetItem *>(selectedItems[0]);
+    if (item == 0 || item->image() == 0) return;
+    QSignalBlocker blocker1(ui->doubleSpinBoxMin);  // this is done so the slot is only called once
+    QSignalBlocker blocker2(ui->doubleSpinBoxMax);
+    ui->doubleSpinBoxMin->setValue(item->image()->permilleile(lower));
+    ui->doubleSpinBoxMax->setValue(item->image()->permilleile(upper));
+    displayValueChanged(0); // called specifically because the signal is blocked
+}
+
 void MdiChild::performRecipes()
 {
     QList<QTreeWidgetItem *> selectedItems = ui->treeWidgetImageSet->selectedItems();
@@ -936,6 +948,7 @@ void MdiChild::treeWidgetClicked(QTreeWidgetItem *item, int column)
     m_graphicsView->setDrawGreen(drawGreen);
     m_graphicsView->setDrawBlue(drawBlue);
     m_graphicsView->update();
+    emit menuUpdate();
 }
 
 void MdiChild::displayOneImageIfNecessary()
@@ -1016,6 +1029,7 @@ void MdiChild::treeWidgetClickedLabelledPointSet(QTreeWidgetItem *item, int colu
         }
     }
     m_graphicsView->update();
+    emit menuUpdate();
 }
 
 void MdiChild::changeEvent(QEvent* e)
@@ -1048,7 +1062,7 @@ void MdiChild::importHDF5()
     if (status == QDialog::Accepted)
     {
         QList<SingleChannelImage *> images = hdfDialog.ouputImages();
-        QTreeWidgetItem *newParent = doNewTreeWidgetImageSet(ui->treeWidgetImageSet->invisibleRootItem());
+        QTreeWidgetItem *newParent = doNewTreeWidgetImageSet(ui->treeWidgetImageSet->invisibleRootItem(), "HDF Import");
         for (int i = 0; i < images.size(); i++)
         {
             QStringList itemStrings;
@@ -1063,7 +1077,7 @@ void MdiChild::importHDF5()
         for (int i = 0; i < ui->treeWidgetImageSet->columnCount(); i++) ui->treeWidgetImageSet->resizeColumnToContents(i);
         displayOneImageIfNecessary();
         m_isModified = true;
-        emit emitStatus(tr("HDF import OK"));
+        emit statusText(tr("HDF import OK"));
     }
 }
 
@@ -1090,7 +1104,8 @@ void MdiChild::pca()
     if (status == QDialog::Accepted)
     {
         QList<SingleChannelImage *> images = pcaDialog.ouputImages();
-        QTreeWidgetItem *newParent = doNewTreeWidgetImageSet(ui->treeWidgetImageSet->invisibleRootItem());
+        QFileInfo fi(pcaDialog.outputFolder());
+        QTreeWidgetItem *newParent = doNewTreeWidgetImageSet(ui->treeWidgetImageSet->invisibleRootItem(), fi.baseName());
         for (int i = 0; i < images.size(); i++)
         {
             QStringList itemStrings;
@@ -1104,7 +1119,7 @@ void MdiChild::pca()
         newParent->setExpanded(true);
         for (int i = 0; i < ui->treeWidgetImageSet->columnCount(); i++) ui->treeWidgetImageSet->resizeColumnToContents(i);
         m_isModified = true;
-        emit emitStatus(tr("PCA OK"));
+        emit statusText(tr("PCA OK"));
     }
 }
 
@@ -1141,7 +1156,8 @@ void MdiChild::lda()
     if (status == QDialog::Accepted)
     {
         QList<SingleChannelImage *> images = ldaDialog.ouputImages();
-        QTreeWidgetItem *newParent = doNewTreeWidgetImageSet(ui->treeWidgetImageSet->invisibleRootItem());
+        QFileInfo fi(ldaDialog.outputFolder());
+        QTreeWidgetItem *newParent = doNewTreeWidgetImageSet(ui->treeWidgetImageSet->invisibleRootItem(), fi.baseName());
         for (int i = 0; i < images.size(); i++)
         {
             QStringList itemStrings;
@@ -1155,8 +1171,9 @@ void MdiChild::lda()
         newParent->setExpanded(true);
         for (int i = 0; i < ui->treeWidgetImageSet->columnCount(); i++) ui->treeWidgetImageSet->resizeColumnToContents(i);
         m_isModified = true;
-        emit emitStatus(tr("LDA OK"));
-    }}
+        emit statusText(tr("LDA OK"));
+    }
+}
 
 
 void MdiChild::menuRequestLabelledPointSet(const QPoint &p)
@@ -1269,7 +1286,7 @@ void MdiChild::doNewPointsTreeWidgetLabelledPointSet()
     for (int i = 0; i < ui->treeWidgetLabelledPointSet->columnCount(); i++) ui->treeWidgetLabelledPointSet->resizeColumnToContents(i);
     m_isModified = true;
     m_defaultLabelledPointsNameCount++;
-    emit emitStatus(QString("%1 labelled point set created").arg(labelledPoints->name()));
+    emit statusText(QString("%1 labelled point set created").arg(labelledPoints->name()));
 }
 
 void MdiChild::doRenameTreeWidgetLabelledPointSet()
@@ -1283,7 +1300,7 @@ void MdiChild::doRenameTreeWidgetLabelledPointSet()
     QString text = QInputDialog::getText(this, tr("Rename Labelled Point Set"), selectedItem->text(0), QLineEdit::Normal, selectedItem->text(0), &ok);
     if (ok && !text.isEmpty())
     {
-        emit emitStatus(QString("%1 renamed to %2").arg(selectedItem->text(0)).arg(text));
+        emit statusText(QString("%1 renamed to %2").arg(selectedItem->text(0)).arg(text));
         selectedItem->setText(0, text);
         if (selectedItem->labelledPoints()) selectedItem->labelledPoints()->setName(text);
         for (int i = 0; i < ui->treeWidgetLabelledPointSet->columnCount(); i++) ui->treeWidgetLabelledPointSet->resizeColumnToContents(i);
@@ -1341,12 +1358,13 @@ void MdiChild::createNewLabelledPoint(float x, float y)
     if (m_activeLabelledPointItem)
     {
         m_activeLabelledPointItem->labelledPoints()->AddPoint(x, y);
-        emit emitStatus(QString("X=%1 Y=%2 added to %3").arg(x).arg(y).arg(m_activeLabelledPointItem->labelledPoints()->name()));
+        emit statusText(QString("X=%1 Y=%2 added to %3").arg(x).arg(y).arg(m_activeLabelledPointItem->labelledPoints()->name()));
         m_graphicsView->update();
+        m_isModified = true;
     }
     else
     {
-        emit emitStatus(QString("No point list active"));
+        emit statusText(QString("No point list active"));
     }
 }
 
@@ -1360,7 +1378,7 @@ void MdiChild::deleteCurrentLabelledPoint(float x, float y)
         QList<QPointF> *points = m_activeLabelledPointItem->labelledPoints()->points();
         for (int i = 0; i < points->size(); i++)
         {
-            distance2 = SQUARE(points->at(i).x()) + SQUARE(points->at(i).y());
+            distance2 = SQUARE(points->at(i).x() - x) + SQUARE(points->at(i).y() - y);
             if (distance2 < closestDistance2)
             {
                 closestDistance2 = distance2;
@@ -1368,12 +1386,13 @@ void MdiChild::deleteCurrentLabelledPoint(float x, float y)
             }
         }
         points->removeAt(closestDistanceIndex);
-        emit emitStatus(QString("X=%1 Y=%2 deleted to %3").arg(x).arg(y).arg(m_activeLabelledPointItem->labelledPoints()->name()));
+        emit statusText(QString("X=%1 Y=%2 deleted to %3").arg(x).arg(y).arg(m_activeLabelledPointItem->labelledPoints()->name()));
         m_graphicsView->update();
+        m_isModified = true;
     }
     else
     {
-        emit emitStatus(QString("No point list active"));
+        emit statusText(QString("No point list active"));
     }
 }
 
@@ -1410,14 +1429,14 @@ void MdiChild::menuRequestImageSet(const QPoint &p)
     }
     QPoint gp = ui->treeWidgetImageSet->mapToGlobal(p);
     QAction *action = menu.exec(gp);
-    if (action == newFolderAct) doNewTreeWidgetImageSet(0);
+    if (action == newFolderAct) doNewTreeWidgetImageSet(0, QString());
     if (action == deleteAct) doDeleteTreeWidgetImageSet();
     if (action == renameAct) doRenameTreeWidgetImageSet();
     if (action == normalDisplayAct) doSetLogDisplayTreeWidgetImageSet(false);
     if (action == logDisplayAct) doSetLogDisplayTreeWidgetImageSet(true);
 }
 
-QTreeWidgetItem *MdiChild::doNewTreeWidgetImageSet(QTreeWidgetItem *parent)
+QTreeWidgetItem *MdiChild::doNewTreeWidgetImageSet(QTreeWidgetItem *parent, const QString &name)
 {
     if (parent == 0)
     {
@@ -1436,7 +1455,8 @@ QTreeWidgetItem *MdiChild::doNewTreeWidgetImageSet(QTreeWidgetItem *parent)
     }
 
     QStringList itemStrings;
-    itemStrings << QString("%1 %2").arg(m_defaultImportTreeItemName).arg(m_defaultImportTreeItemNameCount, 2, 10, QChar('0')) << "" << "" << "";
+    if (name.isEmpty()) itemStrings << QString("%1 %2").arg(m_defaultImportTreeItemName).arg(m_defaultImportTreeItemNameCount, 2, 10, QChar('0')) << "" << "" << "";
+    else itemStrings << name << "" << "" << "";
     qDebug("doNewTreeWidgetImageSet: %s", qUtf8Printable(itemStrings[0]));
     ImageTreeWidgetItem *newItem = new ImageTreeWidgetItem(parent, itemStrings);
     newItem->setData(1, Qt::CheckStateRole, QVariant());
@@ -1482,13 +1502,21 @@ void MdiChild::doSetLogDisplayTreeWidgetImageSet(bool useLog)
     {
         ImageTreeWidgetItem *item = dynamic_cast<ImageTreeWidgetItem *>(selectedItems[i]);
         if (item == 0) { qDebug("doDeleteTreeWidgetImageSet: Unexpected cast fail\n"); return; }
-        if (item->image()) item->image()->setDisplayLogged(useLog);
+        if (item->image())
+        {
+            item->image()->setDisplayLogged(useLog);
+            if (useLog && item->image()->displayMin() <= 0) item->image()->setDisplayRange(item->image()->dataLogMin(), item->image()->displayMax());
+        }
         if (item->childCount() > 0)
         {
             for (QTreeWidgetItemIterator it = QTreeWidgetItemIterator(item); *it; it++)
             {
                 ImageTreeWidgetItem *childItem = dynamic_cast<ImageTreeWidgetItem *>(*it);
-                if (childItem && childItem->image()) childItem->image()->setDisplayLogged(useLog);
+                if (childItem && childItem->image())
+                {
+                    childItem->image()->setDisplayLogged(useLog);
+                    if (useLog && childItem->image()->displayMin() <= 0) childItem->image()->setDisplayRange(childItem->image()->dataLogMin(), childItem->image()->displayMax());
+                }
             }
         }
     }
@@ -1507,7 +1535,7 @@ void  MdiChild::doRenameTreeWidgetImageSet()
     QString text = QInputDialog::getText(this, tr("Rename Image Label"), selectedItem->text(0), QLineEdit::Normal, selectedItem->text(0), &ok);
     if (ok && !text.isEmpty())
     {
-        emit emitStatus(QString("%1 renamed to %2").arg(selectedItem->text(0)).arg(text));
+        emit statusText(QString("%1 renamed to %2").arg(selectedItem->text(0)).arg(text));
         selectedItem->setText(0, text);
         if (selectedItem->image()) selectedItem->image()->setName(text);
         for (int i = 0; i < ui->treeWidgetImageSet->columnCount(); i++) ui->treeWidgetImageSet->resizeColumnToContents(i);
@@ -1630,7 +1658,7 @@ void MdiChild::zoomToValue(float zoom)
 
 void MdiChild::updateStatus(QString status)
 {
-    emit emitStatus(status);
+    emit statusText(status);
 }
 
 void MdiChild::preferencesUpdated()
@@ -1648,12 +1676,19 @@ void MdiChild::preferencesUpdated()
     treeWidgetSelected();
 }
 
-void MdiChild::ticker()
-{
-}
+//void MdiChild::ticker()
+//{
+//}
 
 void MdiChild::menuRequestHistogram(const QPoint &p)
 {
+    QList<QTreeWidgetItem *> selectedItems = ui->treeWidgetImageSet->selectedItems();
+    if (selectedItems.size() == 0) return;
+    ImageTreeWidgetItem *item = dynamic_cast<ImageTreeWidgetItem *>(selectedItems[0]);
+    if (item == 0) return;
+    SingleChannelImage *image = item->image();
+    if (image == 0) return;
+
     QMenu menu(this);
     QAction *autoGammaAct = new QAction(QIcon(":/images/tools-wizard.png"), tr("Auto Gamma"), this);
     autoGammaAct->setStatusTip(tr("Calculates optimal gamma values to maximise contrast"));
@@ -1661,10 +1696,30 @@ void MdiChild::menuRequestHistogram(const QPoint &p)
     autoGammaAct->setStatusTip(tr("Inverts the greyscale values by swapping the min and max"));
     QAction *resetDisplayAct = new QAction(QIcon(":/images/reset@2x.png"), tr("Reset Display"), this);
     resetDisplayAct->setStatusTip(tr("Resets the display to default values"));
+    QAction *percentile0_1Act = new QAction(tr("0.1-99.9%"), this);
+    percentile0_1Act->setStatusTip(tr("Sets the range to cover the 0.1 to 99.9 percentiles"));
+    QAction *percentile1_0Act = new QAction(tr("1-99%"), this);
+    percentile1_0Act->setStatusTip(tr("Sets the range to cover the 1 to 99 percentiles"));
+    QAction *percentile5_0Act = new QAction(tr("5-95%"), this);
+    percentile5_0Act->setStatusTip(tr("Sets the range to cover the 5 to 95 percentiles"));
+    QAction *logDisplayAct = new QAction(QIcon(":/images/tree_s.png"), tr("Display Log"), this);
+    logDisplayAct->setStatusTip(tr("Displays the log transformed image"));
+    QAction *normalDisplayAct = new QAction(QIcon(":/images/no_tree_s.png"), tr("Display Normal"), this);
+    normalDisplayAct->setStatusTip(tr("Displays the untransformed image"));
 
     menu.addAction(autoGammaAct);
     menu.addAction(invertAct);
     menu.addAction(resetDisplayAct);
+    menu.addSeparator();
+    menu.addAction(percentile0_1Act);
+    menu.addAction(percentile1_0Act);
+    menu.addAction(percentile5_0Act);
+    menu.addSeparator();
+    menu.addAction(logDisplayAct);
+    menu.addAction(normalDisplayAct);
+
+    if (image->displayLogged()) logDisplayAct->setEnabled(false);
+    else normalDisplayAct->setEnabled(false);
 
     QPoint gp = m_histogramDisplay->mapToGlobal(p);
     QAction *action = menu.exec(gp);
@@ -1680,6 +1735,28 @@ void MdiChild::menuRequestHistogram(const QPoint &p)
     {
         resetDisplay();
     }
+    else if (action == percentile0_1Act)
+    {
+        applyPermilleile(1, 999);
+    }
+    else if (action == percentile1_0Act)
+    {
+        applyPermilleile(10, 990);
+    }
+    else if (action == percentile5_0Act)
+    {
+        applyPermilleile(50, 950);
+    }
+    else if (action == logDisplayAct)
+    {
+        image->setDisplayLogged(true);
+        displayValueChanged(0);
+    }
+    else if (action == normalDisplayAct)
+    {
+        image->setDisplayLogged(false);
+        displayValueChanged(0);
+    }
 
 }
 
@@ -1687,6 +1764,7 @@ void MdiChild::treeWidgetHeaderDoubleClicked(int logicalIndex)
 {
     if (logicalIndex == IMAGE_TREE_COLUMN_SELECTED)
     {
+        m_numSelectedImages = 0;
         for (QTreeWidgetItemIterator it = QTreeWidgetItemIterator(ui->treeWidgetImageSet->invisibleRootItem()); *it; it++)
         {
             qDebug("QTreeWidgetItem.text=%s", qUtf8Printable((*it)->text(0)));
@@ -1696,11 +1774,16 @@ void MdiChild::treeWidgetHeaderDoubleClicked(int logicalIndex)
                 qDebug("imageItem->parent().text=%s", qUtf8Printable(imageItem->parent()->text(0)));
                 if (imageItem->parent()->isExpanded())
                 {
-                    if (imageItem->checkState(IMAGE_TREE_COLUMN_SELECTED) == Qt::Unchecked) imageItem->setCheckState(IMAGE_TREE_COLUMN_SELECTED, Qt::Checked);
+                    if (imageItem->checkState(IMAGE_TREE_COLUMN_SELECTED) == Qt::Unchecked)
+                    {
+                        imageItem->setCheckState(IMAGE_TREE_COLUMN_SELECTED, Qt::Checked);
+                        m_numSelectedImages++;
+                    }
                     else imageItem->setCheckState(IMAGE_TREE_COLUMN_SELECTED, Qt::Unchecked);
                 }
             }
         }
+        emit menuUpdate();
     }
 }
 
@@ -1722,7 +1805,6 @@ void MdiChild::treeWidgetHeaderDoubleClickedLabelledPointSet(int logicalIndex)
                     {
                         pointsItem->setCheckState(POINTS_TREE_DISPLAY, Qt::Checked);
                         points->append(pointsItem->labelledPoints());
-                        m_numSelectedPoints++;
                     }
                     else pointsItem->setCheckState(POINTS_TREE_DISPLAY, Qt::Unchecked);
                 }
@@ -1732,6 +1814,7 @@ void MdiChild::treeWidgetHeaderDoubleClickedLabelledPointSet(int logicalIndex)
     }
     else if (logicalIndex == POINTS_TREE_SELECTED)
     {
+        m_numSelectedPoints = 0;
         for (QTreeWidgetItemIterator it = QTreeWidgetItemIterator(ui->treeWidgetLabelledPointSet->invisibleRootItem()); *it; it++)
         {
             LabelledPointsTreeWidgetItem *pointsItem = dynamic_cast<LabelledPointsTreeWidgetItem *>(*it);
@@ -1739,43 +1822,48 @@ void MdiChild::treeWidgetHeaderDoubleClickedLabelledPointSet(int logicalIndex)
             {
                 if (pointsItem->parent()->isExpanded())
                 {
-                    if (pointsItem->checkState(POINTS_TREE_SELECTED) == Qt::Unchecked) pointsItem->setCheckState(POINTS_TREE_SELECTED, Qt::Checked);
+                    if (pointsItem->checkState(POINTS_TREE_SELECTED) == Qt::Unchecked)
+                    {
+                        pointsItem->setCheckState(POINTS_TREE_SELECTED, Qt::Checked);
+                        m_numSelectedPoints++;
+                    }
                     else pointsItem->setCheckState(POINTS_TREE_SELECTED, Qt::Unchecked);
                 }
             }
         }
+        emit menuUpdate();
     }
 }
 
-void MdiChild::drawLog(bool drawLogged)
-{
-    SingleChannelImage *image;
-    for (QTreeWidgetItemIterator it = QTreeWidgetItemIterator(ui->treeWidgetImageSet->invisibleRootItem()); *it; it++)
-    {
-        ImageTreeWidgetItem *imageItem = dynamic_cast<ImageTreeWidgetItem *>(*it);
-        if (imageItem && imageItem->image())
-        {
-            image = imageItem->image();
-            if (imageItem->checkState(IMAGE_TREE_COLUMN_RED) == Qt::Checked)
-            {
-                image->setDisplayLogged(drawLogged);
-                image->setDisplayRange(std::max(image->dataLogMin(), image->displayMin()), image->displayMax());
-                m_graphicsView->setTextureDisplay(image->displayMin(), image->displayMax(), image->displayGamma(), image->displayZebra(), image->displayLogged(), GraphicsView::Red);
-            }
-            if (imageItem->checkState(IMAGE_TREE_COLUMN_GREEN) == Qt::Checked)
-            {
-                image->setDisplayLogged(drawLogged);
-                image->setDisplayRange(std::max(image->dataLogMin(), image->displayMin()), image->displayMax());
-                m_graphicsView->setTextureDisplay(image->displayMin(), image->displayMax(), image->displayGamma(), image->displayZebra(), image->displayLogged(), GraphicsView::Green);
-            }
-            if (imageItem->checkState(IMAGE_TREE_COLUMN_BLUE) == Qt::Checked)
-            {
-                image->setDisplayLogged(drawLogged);
-                image->setDisplayRange(std::max(image->dataLogMin(), image->displayMin()), image->displayMax());
-                m_graphicsView->setTextureDisplay(image->displayMin(), image->displayMax(), image->displayGamma(), image->displayZebra(), image->displayLogged(), GraphicsView::Blue);
-            }
-        }
-    }
-    m_isModified = true;
-    treeWidgetSelected();
-}
+//void MdiChild::drawLog(bool drawLogged)
+//{
+//    SingleChannelImage *image;
+//    for (QTreeWidgetItemIterator it = QTreeWidgetItemIterator(ui->treeWidgetImageSet->invisibleRootItem()); *it; it++)
+//    {
+//        ImageTreeWidgetItem *imageItem = dynamic_cast<ImageTreeWidgetItem *>(*it);
+//        if (imageItem && imageItem->image())
+//        {
+//            image = imageItem->image();
+//            if (imageItem->checkState(IMAGE_TREE_COLUMN_RED) == Qt::Checked)
+//            {
+//                image->setDisplayLogged(drawLogged);
+//                image->setDisplayRange(std::max(image->dataLogMin(), image->displayMin()), image->displayMax());
+//                m_graphicsView->setTextureDisplay(image->displayMin(), image->displayMax(), image->displayGamma(), image->displayZebra(), image->displayLogged(), GraphicsView::Red);
+//            }
+//            if (imageItem->checkState(IMAGE_TREE_COLUMN_GREEN) == Qt::Checked)
+//            {
+//                image->setDisplayLogged(drawLogged);
+//                image->setDisplayRange(std::max(image->dataLogMin(), image->displayMin()), image->displayMax());
+//                m_graphicsView->setTextureDisplay(image->displayMin(), image->displayMax(), image->displayGamma(), image->displayZebra(), image->displayLogged(), GraphicsView::Green);
+//            }
+//            if (imageItem->checkState(IMAGE_TREE_COLUMN_BLUE) == Qt::Checked)
+//            {
+//                image->setDisplayLogged(drawLogged);
+//                image->setDisplayRange(std::max(image->dataLogMin(), image->displayMin()), image->displayMax());
+//                m_graphicsView->setTextureDisplay(image->displayMin(), image->displayMax(), image->displayGamma(), image->displayZebra(), image->displayLogged(), GraphicsView::Blue);
+//            }
+//        }
+//    }
+//    m_isModified = true;
+//    treeWidgetSelected();
+//}

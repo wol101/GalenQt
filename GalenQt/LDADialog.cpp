@@ -1,4 +1,5 @@
 #include <algorithm>
+#include <iostream>
 
 #include <QMessageBox>
 #include <QFileDialog>
@@ -10,6 +11,7 @@
 #include <QFuture>
 #include <QFutureWatcher>
 #include <QtConcurrent/QtConcurrent>
+#include <QtDebug>
 
 #include <Eigen/Dense>
 
@@ -17,9 +19,12 @@
 #include "SingleChannelImage.h"
 #include "LabelledPoints.h"
 #include "Settings.h"
+#include "ScatterPlotDialog.h"
 
 #include "LDADialog.h"
 #include "ui_LDADialog.h"
+
+#define DEBUG_LDA_DIALOG 1
 
 LDADialog::LDADialog(QWidget *parent) :
     QDialog(parent),
@@ -148,13 +153,22 @@ void LDADialog::doLDAClicked()
         LabelledPoints *points = m_inputPoints[i];
         for (int j = 0; j < points->points()->size(); j++)
         {
+#if DEBUG_LDA_DIALOG
+            qDebug() << i;
+#endif
             for (int k = 0; k < m_inputImages.size(); k++)
             {
                 QPointF point = points->points()->at(j);
                 x(currentPoint, k) = m_data(int(point.x() +0.5) + (height - int(point.y() + 0.5)) * width, k);
+#if DEBUG_LDA_DIALOG
+                qDebug() << " " << x(currentPoint, k);
+#endif
             }
             labels(currentPoint) = i;
             currentPoint++;
+#if DEBUG_LDA_DIALOG
+            qDebug() << "\n";
+#endif
         }
     }
     m_lda.setIsCenter(ui->checkBoxMeanCenter->isChecked());
@@ -183,10 +197,8 @@ void LDADialog::ldaFinished()
         SingleChannelImage *image = new SingleChannelImage();
         image->AllocateMemory(width, height, false);
         std::copy(dataPtr + i * size, dataPtr + (i + 1) * size, image->data());
-        image->UpdateMinMax();
         image->setNumBins(Settings::value("Number of Histogram Bins", int(32)).toInt());
         image->UpdateHistogram();
-        image->UpdateDisplay();
         QString name = QString("LD%1").arg(i, 3, 10, QChar('0'));
         image->setName(name);
         QString filename = QString("LDA_Output_Image_%1.tif").arg(i, 3, 10, QChar('0'));
@@ -208,6 +220,8 @@ void LDADialog::ldaFinished()
     for (int i = 0; i < m_buffersToDelete.size(); i++) delete [] m_buffersToDelete[i];
     m_buffersToDelete.clear();
 
+    scatterPlot();
+
     StoreSettings();
     accept();
 
@@ -222,6 +236,7 @@ void LDADialog::StoreSettings()
     Settings::setValue("_LDAOutputFolder", ui->lineEditOutputFolder->text());
     Settings::setValue("_LDAMeanCentre", ui->checkBoxMeanCenter->isChecked());
     Settings::setValue("_LDANormaliseVariance", ui->checkBoxNormaliseVariance->isChecked());
+    Settings::setValue("_LDAApplyDisplay", ui->checkBoxApplyDisplay->isChecked());
     Settings::setValue("_LDADialogGeometry", saveGeometry());
     Settings::setValue("_LDADialogGeometry", saveGeometry());
 }
@@ -246,4 +261,39 @@ void LDADialog::closeEvent(QCloseEvent *event)
     StoreSettings();
     event->accept();
 }
+
+void LDADialog::scatterPlot()
+{
+    ScatterPlotDialog scatterPlotDialog(this);
+
+    Eigen::Matrix<float, Eigen::Dynamic, Eigen::Dynamic, Eigen::ColMajor> *scores = m_lda.scores();
+    int row = 0;
+    QVector<float> x(m_totalInputPoints), y(m_totalInputPoints);
+    for (int  i = 0; i < m_inputPoints.size(); i++)
+    {
+        int n = m_inputPoints[i]->points()->size();
+        for (int j = 0; j < n; j ++)
+        {
+            x[j] = (scores->coeff(row + j, 0));
+            y[j] = (scores->coeff(row + j, 1));
+        }
+        scatterPlotDialog.addPoints(x.constData(), y.constData(), n, i == m_inputPoints.size() - 1);
+        row += n;
+    }
+
+    int status = scatterPlotDialog.exec();
+    if (status == QDialog::Accepted)
+    {
+#if DEBUG_LDA_DIALOG
+        qDebug("Scatter Plot OK");
+#endif
+    }
+}
+
+QString LDADialog::outputFolder() const
+{
+    return ui->lineEditOutputFolder->text();
+}
+
+
 

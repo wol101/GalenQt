@@ -156,10 +156,8 @@ void PCADialog::pcaFinished()
         SingleChannelImage *image = new SingleChannelImage();
         image->AllocateMemory(width, height, false);
         std::copy(dataPtr + i * size, dataPtr + (i + 1) * size, image->data());
-        image->UpdateMinMax();
         image->setNumBins(Settings::value("Number of Histogram Bins", int(32)).toInt());
         image->UpdateHistogram();
-        image->UpdateDisplay();
         QString name = QString("PC%1").arg(i, 3, 10, QChar('0'));
         image->setName(name);
         QString filename = QString("PCA_Output_Image_%1.tif").arg(i, 3, 10, QChar('0'));
@@ -219,5 +217,10 @@ void PCADialog::closeEvent(QCloseEvent *event)
 {
     StoreSettings();
     event->accept();
+}
+
+QString PCADialog::outputFolder() const
+{
+    return ui->lineEditOutputFolder->text();
 }
 

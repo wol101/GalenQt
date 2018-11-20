@@ -73,9 +73,9 @@ MainWindow::MainWindow()
         if (QFileInfo(lastFile).isFile()) QTimer::singleShot(2000, this, SLOT(openLastFile()));
     }
 
-    m_ticker = new QTimer(this); // this timer
-    connect(m_ticker, SIGNAL(timeout()), this, SLOT(ticker()));
-    m_ticker->start(Settings::value("_tickIntervalmilliSeconds", 10000).toInt());
+//    m_ticker = new QTimer(this); // this timer
+//    connect(m_ticker, SIGNAL(timeout()), this, SLOT(ticker()));
+//    m_ticker->start(Settings::value("_tickIntervalmilliSeconds", 10000).toInt());
 }
 
 MainWindow::~MainWindow()
@@ -220,8 +220,8 @@ void MainWindow::updateMenus()
     importHDF5Act->setEnabled(hasMdiChild);
     exportImageAct->setEnabled(hasMdiChild);
 
-    pcaAct->setEnabled(hasMdiChild);
-    ldaAct->setEnabled(hasMdiChild);
+    pcaAct->setEnabled(hasMdiChild && activeMdiChild()->numSelectedImages() > 1);
+    ldaAct->setEnabled(hasMdiChild && activeMdiChild()->numSelectedImages() > 1 && activeMdiChild()->numSelectedPoints() > 1);
 }
 
 void MainWindow::updateWindowMenu()
@@ -270,7 +270,8 @@ MdiChild *MainWindow::createMdiChild()
     connect(child, SIGNAL(copyAvailable(bool)),
             copyAct, SLOT(setEnabled(bool)));
 #endif
-    connect(child, SIGNAL(emitStatus(QString)), this, SLOT(updateStatus(QString)));
+    connect(child, SIGNAL(statusText(QString)), this, SLOT(updateStatus(QString)));
+    connect(child, SIGNAL(menuUpdate()), this, SLOT(updateMenus()));
 
     return child;
 }
@@ -637,7 +638,7 @@ void MainWindow::importImages()
     {
         QString lastImportedImageFile = Settings::value("_lastImportedImageFile",QString()).toString();
         QStringList files = QFileDialog::getOpenFileNames(this, tr("Select one or more files to open"), lastImportedImageFile,
-                                                          tr("Images (*.tif *.tiff *.ppm *.pgm *.bmp);;Any File (*.*)"), 0,
+                                                          tr("Images (*.tif *.tiff);;Any File (*.*)"), 0,
                                                           static_cast<QFileDialog::Options>(EXTRA_FILE_DIALOG_OPTIONS));
         if (files.size())
         {
@@ -679,11 +680,11 @@ void MainWindow::updateStatus(QString status)
     statusBar()->showMessage(status);
 }
 
-void MainWindow::ticker()
-{
-    MdiChild *child = activeMdiChild(); // necessary because getOpenFileName can change activeMdiChild
-    pcaAct->setEnabled(child && child->numSelectedImages() >= 2);
-    ldaAct->setEnabled(child && child->numSelectedImages() >= 2 && child->numSelectedPoints() >= 2);
-    if (child) child->ticker();
-}
+//void MainWindow::ticker()
+//{
+//    MdiChild *child = activeMdiChild(); // necessary because getOpenFileName can change activeMdiChild
+//    pcaAct->setEnabled(child && child->numSelectedImages() >= 2);
+//    ldaAct->setEnabled(child && child->numSelectedImages() >= 2 && child->numSelectedPoints() >= 2);
+//    if (child) child->ticker();
+//}
 

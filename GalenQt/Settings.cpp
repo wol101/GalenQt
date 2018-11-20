@@ -2,9 +2,9 @@
 
 #include <QSettings>
 
-const QString Settings::applicationName("AnimalSimulationLaboratory");
-const QString Settings::organizationName("GalenQt");
-QSettings *Settings::m_settings = new QSettings(QSettings::IniFormat, QSettings::UserScope,Settings::applicationName, Settings::organizationName);
+const QString Settings::applicationName("GalenQt");
+const QString Settings::organizationName("AnimalSimulationLaboratory");
+QSettings *Settings::m_settings = new QSettings(QSettings::IniFormat, QSettings::UserScope, Settings::organizationName, Settings::applicationName);
 
 Settings::Settings()
 {

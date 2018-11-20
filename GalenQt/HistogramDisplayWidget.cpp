@@ -19,6 +19,7 @@
 #include <QPalette>
 #include <QMenu>
 #include <QAction>
+#include <QtDebug>
 
 #include <cmath>
 #include <cfloat>
@@ -41,7 +42,7 @@ HistogramDisplayWidget::~HistogramDisplayWidget()
 void HistogramDisplayWidget::mousePressEvent(QMouseEvent *event)
 {
 
-    //std::cerr << event->pos().x() << " " << event->pos().y() << "\n";
+    //qDebug() << event->pos().x() << " " << event->pos().y() << "\n";
 
     if (event->buttons() & Qt::LeftButton)
     {
