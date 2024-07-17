@@ -53,7 +53,7 @@ private:
     QVector<float *> m_buffersToDelete;
     LDA m_lda;
     Eigen::Matrix<float, Eigen::Dynamic, Eigen::Dynamic, Eigen::ColMajor> m_data;
-    QFutureWatcher<void> m_watcher;
+    QFutureWatcher<int> m_watcher;
 };
 
 #endif // LDADIALOG_H

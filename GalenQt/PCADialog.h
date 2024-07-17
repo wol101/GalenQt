@@ -48,7 +48,7 @@ private:
     QVector<float *> m_buffersToDelete;
     PCA m_pca;
     Eigen::Matrix<float, Eigen::Dynamic, Eigen::Dynamic, Eigen::ColMajor> m_data;
-    QFutureWatcher<void> m_watcher;
+    QFutureWatcher<int> m_watcher;
 };
 
 #endif // PCADIALOG_H

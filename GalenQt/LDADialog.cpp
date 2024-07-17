@@ -179,7 +179,7 @@ void LDADialog::doLDAClicked()
     ui->progressBar->show();
     QApplication::processEvents();
 
-    QFuture<void> future = QtConcurrent::run(&m_lda, &LDA::Extend, m_data);
+    QFuture<int> future = QtConcurrent::run(&LDA::Extend, &m_lda, m_data);
     m_watcher.setFuture(future);
     foreach(QWidget *w, findChildren<QWidget *>()) w->setEnabled(false);
     ui->progressBar->setEnabled(true);
