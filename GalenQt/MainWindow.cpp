@@ -52,9 +52,9 @@ MainWindow::MainWindow()
     mdiArea->setHorizontalScrollBarPolicy(Qt::ScrollBarAsNeeded);
     mdiArea->setVerticalScrollBarPolicy(Qt::ScrollBarAsNeeded);
     setCentralWidget(mdiArea);
-    connect(mdiArea, SIGNAL(subWindowActivated(QMdiSubWindow*)), this, SLOT(updateMenus()));
+    connect(mdiArea, &QMdiArea::subWindowActivated, this, &MainWindow::updateMenus);
     windowMapper = new QSignalMapper(this);
-    connect(windowMapper, SIGNAL(mapped(QWidget*)), this, SLOT(setActiveSubWindow(QWidget*)));
+    connect(windowMapper, &QSignalMapper::mappedObject, this, &MainWindow::setActiveSubWindow);
 
     createActions();
     createMenus();
@@ -559,11 +559,12 @@ void MainWindow::switchLayoutDirection()
         qApp->setLayoutDirection(Qt::LeftToRight);
 }
 
-void MainWindow::setActiveSubWindow(QWidget *window)
+void MainWindow::setActiveSubWindow(QObject *window)
 {
-    if (!window)
-        return;
-    mdiArea->setActiveSubWindow(qobject_cast<QMdiSubWindow *>(window));
+    if (QMdiSubWindow *subWindow = qobject_cast<QMdiSubWindow *>(window))
+    {
+        mdiArea->setActiveSubWindow(subWindow);
+    }
 }
 
 void MainWindow::nextChannel()
