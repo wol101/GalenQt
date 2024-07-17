@@ -80,6 +80,9 @@
 #include <ctime>
 #include <exception>
 #include <algorithm>
+// wis - needed for std::make_unique
+#include <memory>
+// ~wis
 
 // Detect/configure OS variables.
 //
@@ -58331,7 +58334,21 @@ namespace cimg_library_suffixed {
         TIFFSetWarningHandler(0);
         TIFFSetErrorHandler(0);
 #endif
-      TIFF *tif = TIFFOpen(filename,"r");
+// wis - adding in code to properly support UTF-8 names on windows
+#if cimg_OS==2 // cimg_OS is set to 2 on windows systems
+        int sizeRequired = MultiByteToWideChar(CP_UTF8, 0, filename, -1, nullptr, 0);
+        if (sizeRequired == 0) return nullptr;
+        auto output = std::make_unique<wchar_t[]>(sizeRequired);
+        MultiByteToWideChar(CP_UTF8, 0, filename, -1, output.get(), sizeRequired);
+        TIFF *tif = TIFFOpenW(output.get(), "r");
+        // wchar_t *output = new wchar_t[size_t(sizeRequired)];
+        // MultiByteToWideChar(CP_UTF8, 0, filename, -1, output, sizeRequired);
+        // TIFF *tif = TIFFOpenW(output, "r");
+        // delete [] output;
+#else
+// ~wis
+        TIFF *tif = TIFFOpen(filename,"r");
+#endif
       if (tif) {
         unsigned int nb_images = 0;
         do ++nb_images; while (TIFFReadDirectory(tif));

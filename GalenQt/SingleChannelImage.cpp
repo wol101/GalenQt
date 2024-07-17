@@ -272,12 +272,12 @@ bool SingleChannelImage::CreateSingleChannelImagesFromFile(const QString &fileNa
     cimg_library::CImgList<float> imagesFromFile;
     try
     {
-        imagesFromFile.load_tiff(fileName.toUtf8().constData(), 0, 1, 1, 0, 0); // this just loads the first image of a multi-image file
+        imagesFromFile.load_tiff(fileName.toUtf8().constData(), 0, 1, 1, 0, 0); // this just loads the first image of a multi-image file and load_tiff has been customised to use MultiByteToWideChar on Windows
     }
 //    cimg_library::CImg<float> imageFromFile;
 //    try
 //    {
-//        imageFromFile.load(fileName.toUtf8().constData()); // note CImg copes with UTF8 to wchar_t using MultiByteToWideChar
+//        imageFromFile.load(fileName.toUtf8().constData()); // note CImg copes with UTF8 to wchar_t using MultiByteToWideChar with load (but not load_tiff)
 //    }
     catch (cimg_library::CImgException& e)
     {
@@ -422,11 +422,11 @@ bool SingleChannelImage::SaveAsColour8BitTiff(SingleChannelImage *redImage, Sing
     uint8_t *imageBuffer = new uint8_t[pixels * 3];
     for (int i = 0; i < pixels; i++)
     {
-        if (redImage) imageBuffer[i] = static_cast<uint8_t>(redImageDisplay[i] * 259.999f);
+        if (redImage) imageBuffer[i] = static_cast<uint8_t>(redImageDisplay[i] * 255.999f);
         else imageBuffer[i] = 0;
-        if (greenImage) imageBuffer[i + pixels] = static_cast<uint8_t>(greenImageDisplay[i] * 259.999f);
+        if (greenImage) imageBuffer[i + pixels] = static_cast<uint8_t>(greenImageDisplay[i] * 255.999f);
         else imageBuffer[i + pixels] = 0;
-        if (blueImage) imageBuffer[i + pixels + pixels] = static_cast<uint8_t>(blueImageDisplay[i] * 259.999f);
+        if (blueImage) imageBuffer[i + pixels + pixels] = static_cast<uint8_t>(blueImageDisplay[i] * 255.999f);
         else imageBuffer[i + 2 * pixels] = 0;
     }
     cimg_library::cimg::exception_mode(0); // enable quiet exception mode
