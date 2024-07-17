@@ -5,7 +5,7 @@
 #include "Settings.h"
 
 #include <QFile>
-#include <QRegExp>
+#include <QRegularExpression>
 #include <QTableWidget>
 #include <QHeaderView>
 #include <QStringList>
@@ -123,7 +123,7 @@ int RecipesDialog::ParseRecipes()
         return __LINE__;
     }
     QString recipeData = QString(file.readAll());
-    QStringList lines = recipeData.split(QRegExp("\n|\r\n|\r")); // this should split into lines no matter what sort of odd line ending we have
+    QStringList lines = recipeData.split(QRegularExpression("\n|\r\n|\r")); // this should split into lines no matter what sort of odd line ending we have
 
     Recipe recipe;
     int current_line_index = 0;
@@ -150,13 +150,13 @@ QString RecipesDialog::ExtractTag(int *lineIndex, const QStringList &lines, cons
     QString openingTagMatchRegExp = QString("^\\s*<\\s*%1\\s*>\\s*$|^\\s*<\\s*%1\\s*>\\s*#.*$").arg(tag);
     QString closingTagMatchRegExp = QString("^\\s*</\\s*%1\\s*>\\s*$|^\\s*</\\s*%1\\s*>\\s*#.*$").arg(tag);
 
-    int openingTagIndex = lines.indexOf(QRegExp(openingTagMatchRegExp), *lineIndex);
+    int openingTagIndex = lines.indexOf(QRegularExpression(openingTagMatchRegExp), *lineIndex);
     if (openingTagIndex < 0)
     {
         *lineIndex = lines.size();
         return outputString;
     }
-    int closingTagIndex = lines.indexOf(QRegExp(closingTagMatchRegExp), openingTagIndex + 1);
+    int closingTagIndex = lines.indexOf(QRegularExpression(closingTagMatchRegExp), openingTagIndex + 1);
     if (closingTagIndex < 0)
     {
         *lineIndex = lines.size();
@@ -313,9 +313,9 @@ int RecipesDialog::HandleRecipe(const Recipe &recipe)
 
     QStringList folderContents = folder.entryList(QDir::NoDotAndDotDot | QDir::Files, QDir::Name);
     m_outputImages.clear();
-    QRegExp regExp(recipe.outputImageRegexp);
+    QRegularExpression regExp(recipe.outputImageRegexp);
     for (int i = 0; i < folderContents.size(); i++)
-        if (regExp.exactMatch(folderContents[i])) m_outputImages.push_back(QDir::cleanPath(QFileInfo(folderContents[i]).absoluteFilePath()));
+        if (regExp.match(folderContents[i]).hasMatch()) m_outputImages.push_back(QDir::cleanPath(QFileInfo(folderContents[i]).absoluteFilePath()));
 
     QDir::setCurrent(currentWorkingFolder);
     return 0;

@@ -154,12 +154,12 @@ MdiChild::MdiChild(QWidget *parent) :
     m_customScroller->setGraphicsView(m_graphicsView);
 
     QBoxLayout *boxLayoutGraphicsView = new QBoxLayout(QBoxLayout::LeftToRight, ui->widgetGraphicsViewPlaceholder);
-    boxLayoutGraphicsView->setMargin(0);
+    boxLayoutGraphicsView->setContentsMargins(0, 0, 0, 0);
     boxLayoutGraphicsView->addWidget(m_customScroller);
 
     m_histogramDisplay = new HistogramDisplayWidget();
     QBoxLayout *boxLayoutHistogramDisplay = new QBoxLayout(QBoxLayout::LeftToRight, ui->widgetHistogramPlaceholder);
-    boxLayoutHistogramDisplay->setMargin(0);
+    boxLayoutHistogramDisplay->setContentsMargins(0, 0, 0, 0);
     boxLayoutHistogramDisplay->addWidget(m_histogramDisplay);
 
     connect(ui->treeWidgetImageSet, SIGNAL(itemClicked(QTreeWidgetItem *, int)), this, SLOT(treeWidgetClicked(QTreeWidgetItem *, int)));
@@ -1025,7 +1025,7 @@ void MdiChild::treeWidgetClickedLabelledPointSet(QTreeWidgetItem *item, int colu
             {
                 m_numSelectedPoints++;
             }
-            labelledPointsItem->setBackgroundColor(0, labelledPointsItem->labelledPoints()->colour());
+            labelledPointsItem->setBackground(0, QBrush(labelledPointsItem->labelledPoints()->colour()));
         }
     }
     m_graphicsView->update();
@@ -1233,7 +1233,7 @@ void MdiChild::doColourTreeWidgetLabelledPointSet()
     if (colour.isValid())
     {
         item->labelledPoints()->setColour(colour);
-        item->setBackgroundColor(0, item->labelledPoints()->colour());
+        item->setBackground(0, QBrush(item->labelledPoints()->colour()));
         m_graphicsView->update();
     }
 }
@@ -1281,7 +1281,7 @@ void MdiChild::doNewPointsTreeWidgetLabelledPointSet()
     newPointSet->setCheckState(POINTS_TREE_DISPLAY, Qt::Unchecked);
     newPointSet->setCheckState(POINTS_TREE_CURRENT, Qt::Unchecked);
     newPointSet->setCheckState(POINTS_TREE_SELECTED, Qt::Unchecked);
-    newPointSet->setBackgroundColor(0, newPointSet->labelledPoints()->colour());
+    newPointSet->setBackground(0, QBrush(newPointSet->labelledPoints()->colour()));
     labelledPointParent->setExpanded(true);
     for (int i = 0; i < ui->treeWidgetLabelledPointSet->columnCount(); i++) ui->treeWidgetLabelledPointSet->resizeColumnToContents(i);
     m_isModified = true;

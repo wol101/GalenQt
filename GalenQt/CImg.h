@@ -58337,7 +58337,10 @@ namespace cimg_library_suffixed {
 // wis - adding in code to properly support UTF-8 names on windows
 #if cimg_OS==2 // cimg_OS is set to 2 on windows systems
         int sizeRequired = MultiByteToWideChar(CP_UTF8, 0, filename, -1, nullptr, 0);
-        if (sizeRequired == 0) return nullptr;
+        if (sizeRequired == 0) throw CImgIOException(_cimglist_instance
+                                                     "load_tiff(): Failed to open file '%s'.",
+                                                     cimglist_instance,
+                                                     filename);
         auto output = std::make_unique<wchar_t[]>(sizeRequired);
         MultiByteToWideChar(CP_UTF8, 0, filename, -1, output.get(), sizeRequired);
         TIFF *tif = TIFFOpenW(output.get(), "r");

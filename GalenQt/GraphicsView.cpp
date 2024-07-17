@@ -4,7 +4,6 @@
 #include <QMouseEvent>
 #include <QMessageBox>
 #include <QApplication>
-#include <QDesktopWidget>
 #include <QMenu>
 #include <QAction>
 
@@ -582,15 +581,15 @@ void GraphicsView::wheelEvent(QWheelEvent * event)
 {
     // assume each ratchet of the wheel gives a score of 120 (8 * 15 degrees)
     float sensitivity = 2400;
-    float delta = float(event->delta()) / sensitivity;
+    float delta = event->angleDelta().y() / sensitivity;
     float scale = 1.0 + CLAMP(delta, -0.5f, 0.5f);
     m_zoom *= scale;
     emit statusString(QString("Zoom %1").arg(m_zoom));
     emit emitZoom(m_zoom);
 
     // convert to view perspective coordinates (basically pixel coordinates on the image)
-    float x = 2.0f * float(event->pos().x()) / float(width()) - 1;
-    float y = 2.0f * float(height() - event->pos().y()) / float(height()) - 1;
+    float x = 2.0f * float(event->position().x()) / float(width()) - 1;
+    float y = 2.0f * float(height() - event->position().y()) / float(height()) - 1;
     QMatrix4x4 invertedVPMatrix = (m_projection * m_view).inverted();
     QVector3D wheelPoint = invertedVPMatrix * QVector3D(x, y, 0);
     QVector3D centerToPoint = wheelPoint - m_center;
@@ -646,7 +645,8 @@ QSize GraphicsView::sizeHint() const
 //    get as much space as possible.
 
     // this could be something cleverer where I look at the screen size and decide from that
-    QRect rec = QApplication::desktop()->screenGeometry(QApplication::desktop()->primaryScreen()); // maybe availableGeometry()
+    QScreen *screen = QGuiApplication::primaryScreen();
+    QRect  rec = screen->geometry();
     int height = rec.height();
     int width = rec.width();
     int minDimension = MIN(height, width);

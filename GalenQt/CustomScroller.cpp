@@ -20,7 +20,7 @@ CustomScroller::CustomScroller(QWidget *parent) : QWidget(parent)
     m_verticalScrollBar = new QScrollBar(Qt::Vertical);
     m_gridLayout->addWidget(m_verticalScrollBar, 0, 1);
     m_gridLayout->addWidget(m_horizontalScrollBar, 1, 0);
-    m_gridLayout->setMargin(0);
+    m_gridLayout->setContentsMargins(0, 0, 0, 0);
     m_gridLayout->setHorizontalSpacing(0);
     m_gridLayout->setVerticalSpacing(0);
     setLayout(m_gridLayout);
