@@ -432,7 +432,7 @@ bool SingleChannelImage::SaveAsColour8BitTiff(SingleChannelImage *redImage, Sing
     cimg_library::cimg::exception_mode(0); // enable quiet exception mode
     bool isShared = true;
     cimg_library::CImg<uint8_t> imageToWrite(imageBuffer, width, height, 1, 3, isShared);
-    unsigned int compressionType = 1; // LZW
+    unsigned int compressionType = 0; // LZW 1 currently causes a crash (FIX ME)
     float *voxel_size = 0;
     char *description = 0;
     bool use_bigtiff = true;
