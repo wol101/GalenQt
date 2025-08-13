@@ -473,6 +473,7 @@ void MainWindow::createToolBars()
 {
     fileToolBar = addToolBar(tr("File"));
     fileToolBar->setObjectName("fileToolBar");
+    fileToolBar->setIconSize(QSize(32, 32));
     fileToolBar->addAction(newAct);
     fileToolBar->addAction(openAct);
     fileToolBar->addAction(importImagesAct);
@@ -483,12 +484,14 @@ void MainWindow::createToolBars()
 #ifndef QT_NO_CLIPBOARD
     editToolBar = addToolBar(tr("Edit"));
     editToolBar->setObjectName("editToolBar");
+    editToolBar->setIconSize(QSize(32, 32));
     editToolBar->addAction(cutAct);
     editToolBar->addAction(copyAct);
     editToolBar->addAction(pasteAct);
 #endif
     imageToolBar = addToolBar(tr("Image"));
     imageToolBar->setObjectName("imageToolBar");
+    imageToolBar->setIconSize(QSize(32, 32));
     imageToolBar->addAction(zoomInAct);
     imageToolBar->addAction(zoomOutAct);
     imageToolBar->addAction(rotateLeftAct);
@@ -498,6 +501,7 @@ void MainWindow::createToolBars()
 
     processToolBar = addToolBar(tr("Process"));
     processToolBar->setObjectName("processToolBar");
+    processToolBar->setIconSize(QSize(32, 32));
     processToolBar->addAction(pcaAct);
     processToolBar->addSeparator();
     processToolBar->addAction(ldaAct);

@@ -220,7 +220,7 @@ void LDADialog::ldaFinished()
     for (int i = 0; i < m_buffersToDelete.size(); i++) delete [] m_buffersToDelete[i];
     m_buffersToDelete.clear();
 
-    scatterPlot();
+    // scatterPlot();
 
     StoreSettings();
     accept();

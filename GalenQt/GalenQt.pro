@@ -74,7 +74,6 @@ SOURCES += main.cpp\
     LabelledPoints.cpp \
     LabelledPointsTreeWidgetItem.cpp \
     StrokeFont.cpp \
-    libtiff/tif_stream.cxx \
     libtiff/tif_aux.c \
     libtiff/tif_close.c \
     libtiff/tif_codec.c \
@@ -91,9 +90,11 @@ SOURCES += main.cpp\
     libtiff/tif_fax3sm.c \
     libtiff/tif_flush.c \
     libtiff/tif_getimage.c \
+    libtiff/tif_hash_set.c \
     libtiff/tif_jbig.c \
     libtiff/tif_jpeg.c \
     libtiff/tif_jpeg_12.c \
+    libtiff/tif_lerc.c \
     libtiff/tif_luv.c \
     libtiff/tif_lzma.c \
     libtiff/tif_lzw.c \
@@ -105,14 +106,18 @@ SOURCES += main.cpp\
     libtiff/tif_predict.c \
     libtiff/tif_print.c \
     libtiff/tif_read.c \
+    libtiff/tif_stream.cxx \
     libtiff/tif_strip.c \
     libtiff/tif_swab.c \
     libtiff/tif_thunder.c \
     libtiff/tif_tile.c \
     libtiff/tif_version.c \
     libtiff/tif_warning.c \
+    libtiff/tif_webp.c \
+    libtiff/tif_win32.c \
     libtiff/tif_write.c \
     libtiff/tif_zip.c \
+    libtiff/tif_zstd.c \
     PCA.cpp \
     PCADialog.cpp \
     LDA.cpp \
@@ -443,15 +448,17 @@ HEADERS  += MainWindow.h \
     LabelledPointsTreeWidgetItem.h \
     StrokeFont.h \
     CImg.h \
+    libtiff/libport.h \
+    libtiff/libport_config.h \
     libtiff/t4.h \
     libtiff/tif_config.h \
     libtiff/tif_dir.h \
     libtiff/tif_fax3.h \
+    libtiff/tif_hash_set.h \
     libtiff/tif_predict.h \
     libtiff/tiff.h \
     libtiff/tiffconf.h \
     libtiff/tiffio.h \
-    libtiff/tiffio.hxx \
     libtiff/tiffiop.h \
     libtiff/tiffvers.h \
     libtiff/uvcode.h \
