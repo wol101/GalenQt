@@ -20,6 +20,7 @@ macx {
     DEFINES += cimg_display=0
     DEFINES += cimg_verbosity=1
     DEFINES += cimg_use_tiff
+    DEFINES += HAVE_UNISTD_H
     SOURCES += libtiff/tif_unix.c
     SOURCES += hdf5/src/H5lib_settings.c hdf5/src/H5Tinit.c
     HEADERS += hdf5/src/H5pubconf.h hdf5/src/H5config.h
@@ -114,7 +115,6 @@ SOURCES += main.cpp\
     libtiff/tif_version.c \
     libtiff/tif_warning.c \
     libtiff/tif_webp.c \
-    libtiff/tif_win32.c \
     libtiff/tif_write.c \
     libtiff/tif_zip.c \
     libtiff/tif_zstd.c \
