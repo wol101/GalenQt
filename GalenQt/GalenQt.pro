@@ -24,6 +24,7 @@ macx {
     SOURCES += libtiff/tif_unix.c
     SOURCES += hdf5/src/H5lib_settings.c hdf5/src/H5Tinit.c
     HEADERS += hdf5/src/H5pubconf.h hdf5/src/H5config.h
+    QMAKE_CFLAGS += -std=gnu90 -Wno-error=implicit-function-declaration -Wno-error=incompatible-function-pointer-types
 }
 else:win32 {
     RC_FILE = app.rc
@@ -58,6 +59,7 @@ else:unix {
 OBJECTS_DIR = obj
 CONFIG += no_batch # this gets around a bug in Visual Studio with the object_parallel_to_source option
 CONFIG += object_parallel_to_source # this is important to stop obj files overwriting each other
+CONFIG -= warnings_as_errors
 
 SOURCES += main.cpp\
         MainWindow.cpp \
