@@ -137,7 +137,9 @@ void PCADialog::doPCAClicked()
     m_pca.setIsCorr(ui->checkBoxCorrelationMatrix->isChecked());
     m_pca.setIsCenter(ui->checkBoxMeanCenter->isChecked());
     m_pca.setIsScale(ui->checkBoxNormaliseVariance->isChecked());
-    QFuture<void> future = QtConcurrent::run(&m_pca, &PCA::Calculate, m_data);
+    // QFuture<void> future = QtConcurrent::run(&m_pca, &PCA::Calculate, m_data);
+    QFuture<void> future = QtConcurrent::run([this] { m_pca.Calculate(m_data); });
+
     m_watcher.setFuture(future);
     foreach(QWidget *w, findChildren<QWidget *>()) w->setEnabled(false);
     ui->progressBar->setEnabled(true);

@@ -3,8 +3,10 @@
 
 #include "Settings.h"
 
-#include <QtCharts/QChartView>
-#include <QtCharts/QScatterSeries>
+#include <QChartView>
+#include <QScatterSeries>
+
+// should probably move to QCustomPlot
 
 ScatterPlotDialog::ScatterPlotDialog(QWidget *parent) :
     QDialog(parent),
@@ -64,9 +66,9 @@ void ScatterPlotDialog::cleanUp(int result)
 
 void ScatterPlotDialog::addPoints(const float *x, const float *y, int n, bool lastSet)
 {
-    QtCharts::QScatterSeries *series = new QtCharts::QScatterSeries();
+    QScatterSeries *series = new QScatterSeries();
     for (int i = 0; i < n; i++) series->append(x[i], y[i]);
-    series->setMarkerShape(QtCharts::QScatterSeries::MarkerShapeCircle);
+    series->setMarkerShape(QScatterSeries::MarkerShapeCircle);
     ui->chartView->chart()->addSeries(series);
     if (lastSet)
     {
