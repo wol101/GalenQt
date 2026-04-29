@@ -795,9 +795,10 @@ void MdiChild::sliderValueChanged(int value)
     ImageTreeWidgetItem *item = dynamic_cast<ImageTreeWidgetItem *>(selectedItems[0]);
     if (item == 0) return;
 
-    QSignalBlocker(ui->doubleSpinBoxMin);
-    QSignalBlocker(ui->doubleSpinBoxMax);
-    QSignalBlocker(ui->doubleSpinBoxGamma);
+    QSignalBlocker doubleSpinBoxMinSignalBlocker(ui->doubleSpinBoxMin);
+    QSignalBlocker doubleSpinBoxMaxSignalBlocker(ui->doubleSpinBoxMax);
+    QSignalBlocker doubleSpinBoxGammaSignalBlocker(ui->doubleSpinBoxGamma);
+
     // slider minima are set to zero
     float minSlider = float(ui->verticalSliderMinimum->value()) / float(ui->verticalSliderMinimum->maximum()); // 0 to 1
     float maxSlider = float(ui->verticalSliderMaximum->value()) / float(ui->verticalSliderMaximum->maximum()); // 0 to 1

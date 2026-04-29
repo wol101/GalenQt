@@ -54,7 +54,7 @@ MainWindow::MainWindow()
     setCentralWidget(mdiArea);
     connect(mdiArea, SIGNAL(subWindowActivated(QMdiSubWindow*)), this, SLOT(updateMenus()));
     windowMapper = new QSignalMapper(this);
-    connect(windowMapper, SIGNAL(mapped(QWidget*)), this, SLOT(setActiveSubWindow(QWidget*)));
+    connect(windowMapper, SIGNAL(mappedObject(QObject*)), this, SLOT(setActiveSubWindow(QObject*)));
 
     createActions();
     createMenus();
@@ -559,11 +559,11 @@ void MainWindow::switchLayoutDirection()
         qApp->setLayoutDirection(Qt::LeftToRight);
 }
 
-void MainWindow::setActiveSubWindow(QWidget *window)
+void MainWindow::setActiveSubWindow(QObject *object)
 {
-    if (!window)
-        return;
-    mdiArea->setActiveSubWindow(qobject_cast<QMdiSubWindow *>(window));
+    QMdiSubWindow *mdiSubWindow  = qobject_cast<QMdiSubWindow *>(object);
+    if (!mdiSubWindow) return;
+    mdiArea->setActiveSubWindow(mdiSubWindow);
 }
 
 void MainWindow::nextChannel()

@@ -82,7 +82,7 @@ private slots:
     void updateWindowMenu();
     MdiChild *createMdiChild();
     void switchLayoutDirection();
-    void setActiveSubWindow(QWidget *window);
+    void setActiveSubWindow(QObject *object);
 
     void nextChannel();
     void prevChannel();
