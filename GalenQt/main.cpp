@@ -40,6 +40,7 @@
 
 #include <QApplication>
 #include <QSurfaceFormat>
+#include <QStyleFactory>
 
 #include "MainWindow.h"
 #include "Settings.h"
@@ -59,6 +60,7 @@ int main(int argc, char *argv[])
     QSurfaceFormat::setDefaultFormat(fmt);
 
     QApplication app(argc, argv);
+    app.setStyle(QStyleFactory::create("Fusion"));
     app.setApplicationName("GalenQt");
     app.setOrganizationDomain("animalsimulation.org");
     app.setOrganizationName("AnimalSimulationLaboratory");
