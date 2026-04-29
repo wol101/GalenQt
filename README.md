@@ -1,6 +1,7 @@
 # GalenQt
 
 V1.0 released on 20th November 2018.
+v1.0.1 released on 29th April 2026.
 
 GalenQt is a software tool for organising and displaying multispectral image sets. It was created as part of an AHRC funded project "The Syriac Galen Palimpsest: Galen's On Simple Drugs and the Recovery of Lost Texts through Sophisticated Imaging Techniques" AH/M005704/1. It is written using Qt and released under the GPLv3 license. The software was written with the following golas in mind:
 
