@@ -1,3 +1,20 @@
+To Do
+
+Change the interface to work better on multiple monitors by altering the MDI into regular windows
+
+Add in the features to make reading the new broadband multispectral files easier
+
+Add in the LUTs and allow them to be changed using the scroll wheel
+
+Eventually replace the OpenGL with Metal on Macs
+
+Update the rendering so that the destination quad can also be rotated. Probably remove the scroll bars
+
+Improve the various contrast and brightness controls (make shorter perhaps)
+
+Add in the overtext removal function (remove and replace with something that more or less matches the parchment). This is "inpainting" apparently.
+
+
 To get rid of the "libpng warning: iCCP: known incorrect sRGB profile" use:
 
 find . -name '*.png' -print -exec mogrify -strip {} \;
